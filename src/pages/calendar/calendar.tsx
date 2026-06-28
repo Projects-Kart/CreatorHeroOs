@@ -41,7 +41,7 @@ export function CalendarPage() {
           </div>
         }
       />
-      <div className="p-8 grid grid-cols-12 gap-6 max-w-7xl mx-auto">
+      <div className="p-8 grid grid-cols-12 gap-6">
         <Card className="col-span-12 lg:col-span-8 p-5 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300">
           <div className="grid grid-cols-7 text-xs text-muted-foreground mb-4 px-1 font-medium tracking-wider uppercase">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => <div key={d} className="py-1.5 text-center">{d}</div>)}

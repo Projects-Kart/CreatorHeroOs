@@ -33,8 +33,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const streak = computeStreak(tasks);
 
   return (
-    <div className="min-h-screen flex w-full bg-background text-foreground">
-      <aside className="w-60 shrink-0 border-r border-border bg-sidebar flex flex-col">
+    <div className="h-screen flex w-full bg-background text-foreground overflow-hidden">
+      <aside className="w-60 shrink-0 border-r border-border bg-sidebar flex flex-col h-full overflow-y-auto">
         {/* Logo */}
         <div className="px-5 py-6">
           <Link to="/" className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         {/* Streak card */}
-        <div className="mx-3 mb-2 rounded-lg border border-border bg-surface p-3">
+        <div className="mx-3 mb-2 rounded-lg border border-border bg-surface p-3 shrink-0">
           <div className="flex items-center gap-2">
             <Flame className="h-4 w-4 text-primary" />
             <div className="text-sm font-semibold">{streak}-day streak</div>
@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* User profile + sign-out */}
-        <div className="m-3 mt-1 rounded-lg border border-border bg-surface p-3">
+        <div className="m-3 mt-1 rounded-lg border border-border bg-surface p-3 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             {user?.photoURL ? (
               <img
@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </aside>
-      <main className="flex-1 min-w-0">{children}</main>
+      <main className="flex-1 min-w-0 h-full overflow-y-auto relative">{children}</main>
     </div>
   );
 }

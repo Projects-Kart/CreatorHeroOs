@@ -34,7 +34,7 @@ export function Dashboard() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader title="Today" subtitle={new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} />
-      <div className="p-8 grid grid-cols-12 gap-6 max-w-7xl mx-auto">
+      <div className="p-8 grid grid-cols-12 gap-6">
         <section className="col-span-12 lg:col-span-8 space-y-6">
           <Card className="p-5 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl">
             <div className="flex items-center justify-between mb-4">

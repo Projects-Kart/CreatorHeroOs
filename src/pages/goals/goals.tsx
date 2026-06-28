@@ -12,7 +12,7 @@ export function GoalsPage() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader title="Goals" subtitle="Decompose 6-month outcomes into monthly milestones and weekly action." action={<NewGoalDialog />} />
-      <div className="p-8 space-y-10 max-w-6xl mx-auto">
+      <div className="p-8 space-y-10">
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">

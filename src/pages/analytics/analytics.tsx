@@ -49,7 +49,7 @@ export function AnalyticsPage() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader title="Analytics" subtitle="Effort vs results. Spot patterns, prevent burnout." />
-      <div className="p-8 space-y-8 max-w-7xl mx-auto">
+      <div className="p-8 space-y-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           <Stat label="Consistency score" value={`${consistencyScore}%`} hint="Tasks completed / planned" icon={TrendingUp} />
           <Stat label="Published videos" value={String(published)} hint="In tracked pipeline" icon={Zap} />
