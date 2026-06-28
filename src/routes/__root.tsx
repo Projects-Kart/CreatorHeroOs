@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -16,6 +17,9 @@ import "@fontsource-variable/inter";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuth } from "@/lib/useAuth";
+import { FirebaseLoader } from "@/components/FirebaseLoader";
+import { LoginPage } from "@/pages/auth/LoginPage";
 
 function NotFoundComponent() {
   return (
@@ -118,17 +122,50 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * AuthGate: decides what to render based on Firebase auth state.
+ *
+ * - Loading  → full-screen spinner
+ * - Public share route (/share/*)  → render outlet directly (no auth needed)
+ * - Not logged in → LoginPage
+ * - Logged in → full app wrapped in StoreProvider
+ */
+function AuthGate() {
+  const { user, loading } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Always allow public share pages without auth
+  const isShareRoute = pathname.startsWith("/share/");
+
+  if (loading) return <FirebaseLoader />;
+
+  // Public routes render without auth or StoreProvider
+  if (isShareRoute) {
+    return <Outlet />;
+  }
+
+  // Not authenticated → show login
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  // Authenticated → full app
+  return (
+    <StoreProvider firebaseUid={user.uid}>
+      <AppShell>
+        <Outlet />
+      </AppShell>
+      <Toaster />
+    </StoreProvider>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StoreProvider>
-        <AppShell>
-          <Outlet />
-        </AppShell>
-        <Toaster />
-      </StoreProvider>
+      <AuthGate />
     </QueryClientProvider>
   );
 }

@@ -13,10 +13,12 @@ import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShareTokenRouteImport } from './routes/share.$token'
 
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
@@ -36,6 +38,11 @@ const ReviewRoute = ReviewRouteImport.update({
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsRoute = GoalsRouteImport.update({
@@ -58,26 +65,35 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareTokenRoute = ShareTokenRouteImport.update({
+  id: '/share/$token',
+  path: '/share/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
+  '/share/$token': typeof ShareTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
+  '/share/$token': typeof ShareTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,10 +101,12 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
+  '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/review': typeof ReviewRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
+  '/share/$token': typeof ShareTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,30 +115,36 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/calendar'
     | '/goals'
+    | '/login'
     | '/pipeline'
     | '/review'
     | '/settings'
     | '/tasks'
+    | '/share/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analytics'
     | '/calendar'
     | '/goals'
+    | '/login'
     | '/pipeline'
     | '/review'
     | '/settings'
     | '/tasks'
+    | '/share/$token'
   id:
     | '__root__'
     | '/'
     | '/analytics'
     | '/calendar'
     | '/goals'
+    | '/login'
     | '/pipeline'
     | '/review'
     | '/settings'
     | '/tasks'
+    | '/share/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -128,10 +152,12 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   CalendarRoute: typeof CalendarRoute
   GoalsRoute: typeof GoalsRoute
+  LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   ReviewRoute: typeof ReviewRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
+  ShareTokenRoute: typeof ShareTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -164,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PipelineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/goals': {
       id: '/goals'
       path: '/goals'
@@ -192,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share/$token': {
+      id: '/share/$token'
+      path: '/share/$token'
+      fullPath: '/share/$token'
+      preLoaderRoute: typeof ShareTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -200,10 +240,12 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   CalendarRoute: CalendarRoute,
   GoalsRoute: GoalsRoute,
+  LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   ReviewRoute: ReviewRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
+  ShareTokenRoute: ShareTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
