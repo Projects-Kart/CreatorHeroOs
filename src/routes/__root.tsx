@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+// @ts-expect-error - no types for fontsource side-effect import
 import "@fontsource-variable/inter";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
