@@ -15,7 +15,7 @@ export function ReviewPage() {
   const hasCheckedIn = checkins.some((c) => c.date === today);
 
   const submit = () => {
-    addCheckin({ date: today, mood, notes: notes.trim() || undefined });
+    addCheckin({ date: today, mood, energy: mood, notes: notes.trim() || undefined });
     setNotes("");
   };
 

@@ -107,23 +107,26 @@ export function AnalyticsPage() {
             <h3 className="text-base font-semibold tracking-tight mb-6">Goal velocity</h3>
             <ul className="space-y-5">
               {goals.filter((g) => !g.archived).map((g) => {
-                const pct = Math.min(100, (g.currentValue / g.targetValue) * 100);
+                const targets = g.targets ?? [];
+                const avgPct = targets.length > 0
+                  ? targets.reduce((s, t) => s + (t.targetValue > 0 ? Math.min(100, (t.currentValue / t.targetValue) * 100) : 0), 0) / targets.length
+                  : 0;
                 const totalDays = Math.ceil((new Date(g.deadline).getTime() - new Date(g.createdAt).getTime()) / 86400000);
                 const daysLeft = Math.ceil((new Date(g.deadline).getTime() - Date.now()) / 86400000);
                 const expected = ((totalDays - daysLeft) / totalDays) * 100;
-                const ahead = pct >= expected;
+                const ahead = avgPct >= expected;
                 return (
                   <li key={g.id} className="group">
                     <div className="flex items-center justify-between text-sm mb-2">
                       <span className="font-medium">{g.title}</span>
-                      <span className={"text-xs px-2 py-0.5 rounded-md font-medium transition-colors " + (ahead ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive")}>{ahead ? "On track" : "Behind"}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-md font-medium transition-colors ${ahead ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{ahead ? "On track" : "Behind"}</span>
                     </div>
-                    <div className="h-2.5 rounded-full bg-secondary relative overflow-hidden group-hover:shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] transition-all">
-                      <div className={"absolute inset-y-0 left-0 transition-all duration-1000 " + (ahead ? "bg-primary" : "bg-primary/70")} style={{ width: `${pct}%` }} />
-                      <div className="absolute inset-y-0 w-1 bg-foreground/30 shadow-sm z-10 rounded-full transition-all" style={{ left: `${expected}%` }} title="Expected pace" />
+                    <div className="h-2.5 rounded-full bg-secondary relative overflow-hidden">
+                      <div className={`absolute inset-y-0 left-0 transition-all duration-1000 ${ahead ? "bg-primary" : "bg-primary/70"}`} style={{ width: `${avgPct}%` }} />
+                      <div className="absolute inset-y-0 w-1 bg-foreground/30 shadow-sm z-10 rounded-full" style={{ left: `${expected}%` }} title="Expected pace" />
                     </div>
                     <div className="flex justify-between mt-1 text-[10px] text-muted-foreground font-medium">
-                      <span>{pct.toFixed(1)}% complete</span>
+                      <span>{avgPct.toFixed(1)}% avg complete</span>
                       <span>Expected: {expected.toFixed(1)}%</span>
                     </div>
                   </li>

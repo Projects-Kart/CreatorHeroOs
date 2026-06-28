@@ -197,7 +197,10 @@ export function SharePage({ token }: SharePageProps) {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               {goals.map((goal) => {
-                const pct = Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100));
+                const targets = goal.targets ?? [];
+                const pct = targets.length > 0
+                  ? Math.min(100, Math.round(targets.reduce((s, t) => s + (t.targetValue > 0 ? (t.currentValue / t.targetValue) * 100 : 0), 0) / targets.length))
+                  : 0;
                 return (
                   <div key={goal.id} style={{ padding: "1rem", borderRadius: "0.625rem", background: "hsl(var(--card))", border: "1px solid hsl(var(--border) / 0.6)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
@@ -208,8 +211,7 @@ export function SharePage({ token }: SharePageProps) {
                       <div style={{ height: "100%", width: `${pct}%`, borderRadius: 999, background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))", transition: "width 0.6s ease" }} />
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
-                      <span style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))" }}>{goal.currentValue.toLocaleString()} {goal.unit}</span>
-                      <span style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))" }}>/ {goal.targetValue.toLocaleString()}</span>
+                      <span style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))" }}>Overall Progress</span>
                     </div>
                     {goal.milestones.length > 0 && (
                       <div style={{ marginTop: "0.625rem", display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>

@@ -3,14 +3,18 @@ import { useStore } from "@/lib/store";
 import { type Video as VideoType } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, GripVertical, CheckCircle2, Video, Clapperboard, PenTool, Lightbulb } from "lucide-react";
+import { Trash2, GripVertical, CheckCircle2, Video, Clapperboard, PenTool, Lightbulb, Search, Image as ImageIcon, LineChart, CalendarClock } from "lucide-react";
 import { NewVideoDialog } from "./components/NewVideoDialog";
 
 const STAGES: { id: VideoType["stage"]; label: string; icon: any; color: string }[] = [
   { id: "idea", label: "Ideas", icon: Lightbulb, color: "text-amber-500 bg-amber-500/10" },
+  { id: "research", label: "Research", icon: Search, color: "text-indigo-500 bg-indigo-500/10" },
   { id: "scripting", label: "Scripting", icon: PenTool, color: "text-blue-500 bg-blue-500/10" },
-  { id: "filming", label: "Filming", icon: Clapperboard, color: "text-rose-500 bg-rose-500/10" },
+  { id: "recording", label: "Recording", icon: Clapperboard, color: "text-rose-500 bg-rose-500/10" },
   { id: "editing", label: "Editing", icon: Video, color: "text-purple-500 bg-purple-500/10" },
+  { id: "thumbnail", label: "Thumbnail", icon: ImageIcon, color: "text-pink-500 bg-pink-500/10" },
+  { id: "seo", label: "SEO", icon: LineChart, color: "text-emerald-500 bg-emerald-500/10" },
+  { id: "scheduled", label: "Scheduled", icon: CalendarClock, color: "text-cyan-500 bg-cyan-500/10" },
   { id: "published", label: "Published", icon: CheckCircle2, color: "text-success bg-success/10" },
 ];
 
@@ -18,7 +22,7 @@ export function PipelinePage() {
   const { videos, updateVideo, deleteVideo } = useStore();
 
   const handleDragStart = (e: React.DragEvent, id: string) => e.dataTransfer.setData("videoId", id);
-  const handleDrop = (e: React.DragEvent, stage: Video["stage"]) => {
+  const handleDrop = (e: React.DragEvent, stage: VideoType["stage"]) => {
     const id = e.dataTransfer.getData("videoId");
     if (id) updateVideo(id, { stage });
   };

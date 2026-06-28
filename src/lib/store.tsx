@@ -88,6 +88,7 @@ export function StoreProvider({ children, firebaseUid }: StoreProviderProps) {
 
   // Track which collections have received their first snapshot (idempotent)
   const loadedCollections = useRef(new Set<string>());
+  const TOTAL_COLLECTIONS = 5;
 
   const markLoaded = (name: string) => {
     loadedCollections.current.add(name);

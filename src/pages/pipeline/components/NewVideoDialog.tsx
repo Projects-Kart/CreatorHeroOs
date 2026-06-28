@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import { type Video } from "@/lib/types";
+import { type Video, PIPELINE_STAGES } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ export function NewVideoDialog() {
 
   const submit = () => {
     if (!title.trim()) return;
-    addVideo({ title: title.trim(), stage, publishDate: publishDate || undefined });
+    addVideo({ title: title.trim(), stage, publishDate: publishDate || undefined, priority: "medium" });
     setOpen(false);
     setTitle("");
     setPublishDate("");
@@ -30,20 +30,20 @@ export function NewVideoDialog() {
           <Plus className="h-4 w-4 mr-2" />New video
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] backdrop-blur-xl bg-card/95">
+      <DialogContent className="sm:max-w-[500px] backdrop-blur-xl bg-card/95">
         <DialogHeader><DialogTitle className="text-xl font-bold text-primary">Add to Pipeline</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-1.5"><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. 10 tips for productivity" autoFocus className="font-medium" /></div>
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Initial Stage</Label>
             <div className="flex flex-wrap gap-2">
-              {(["idea", "scripting", "filming", "editing", "published"] as const).map((s) => (
+              {PIPELINE_STAGES.map((s) => (
                 <button
-                  key={s}
-                  onClick={() => setStage(s)}
-                  className={"px-3 py-1 text-sm rounded-full capitalize font-medium transition-colors " + (stage === s ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:bg-secondary/80")}
+                  key={s.id}
+                  onClick={() => setStage(s.id)}
+                  className={"px-3 py-1 text-sm rounded-full capitalize font-medium transition-colors " + (stage === s.id ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:bg-secondary/80")}
                 >
-                  {s}
+                  {s.label}
                 </button>
               ))}
             </div>

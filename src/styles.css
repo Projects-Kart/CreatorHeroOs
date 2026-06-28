@@ -60,6 +60,7 @@
   --color-cat-engagement: var(--cat-engagement);
   --color-cat-admin: var(--cat-admin);
   --color-cat-rest: var(--cat-rest);
+  --color-cat-meeting: var(--cat-meeting);
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -114,6 +115,7 @@
   --cat-engagement: oklch(0.7 0.14 350);
   --cat-admin: oklch(0.55 0.02 250);
   --cat-rest: oklch(0.7 0.05 140);
+  --cat-meeting: oklch(0.62 0.14 195);
 }
 
 .dark {
