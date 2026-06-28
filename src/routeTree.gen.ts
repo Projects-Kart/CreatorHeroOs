@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as ReviewRouteImport } from './routes/review'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -19,6 +20,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PipelineRoute = PipelineRouteImport.update({
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
   '/pipeline': typeof PipelineRoute
+  '/review': typeof ReviewRoute
   '/tasks': typeof TasksRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
   '/pipeline': typeof PipelineRoute
+  '/review': typeof ReviewRoute
   '/tasks': typeof TasksRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/goals': typeof GoalsRoute
   '/pipeline': typeof PipelineRoute
+  '/review': typeof ReviewRoute
   '/tasks': typeof TasksRoute
 }
 export interface FileRouteTypes {
@@ -80,9 +89,17 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/goals'
     | '/pipeline'
+    | '/review'
     | '/tasks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/calendar' | '/goals' | '/pipeline' | '/tasks'
+  to:
+    | '/'
+    | '/analytics'
+    | '/calendar'
+    | '/goals'
+    | '/pipeline'
+    | '/review'
+    | '/tasks'
   id:
     | '__root__'
     | '/'
@@ -90,6 +107,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/goals'
     | '/pipeline'
+    | '/review'
     | '/tasks'
   fileRoutesById: FileRoutesById
 }
@@ -99,6 +117,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   GoalsRoute: typeof GoalsRoute
   PipelineRoute: typeof PipelineRoute
+  ReviewRoute: typeof ReviewRoute
   TasksRoute: typeof TasksRoute
 }
 
@@ -109,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/tasks'
       fullPath: '/tasks'
       preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pipeline': {
@@ -155,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   GoalsRoute: GoalsRoute,
   PipelineRoute: PipelineRoute,
+  ReviewRoute: ReviewRoute,
   TasksRoute: TasksRoute,
 }
 export const routeTree = rootRouteImport
