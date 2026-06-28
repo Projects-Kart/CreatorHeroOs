@@ -3,7 +3,7 @@ import { LayoutDashboard, CheckSquare, Calendar, Target, Film, BarChart3, Notebo
 import { useStore, computeStreak } from "@/lib/store";
 import type { ReactNode } from "react";
 
-const NAV = [
+const NAV: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/calendar", label: "Calendar", icon: Calendar },
@@ -12,7 +12,7 @@ const NAV = [
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/review", label: "Review", icon: NotebookPen },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { tasks, settings } = useStore();
@@ -38,7 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={item.to}
-                to={item.to}
+                to={item.to as "/"}
                 className={
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors " +
                   (active
