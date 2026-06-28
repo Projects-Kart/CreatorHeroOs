@@ -61,6 +61,14 @@
   --color-cat-admin: var(--cat-admin);
   --color-cat-rest: var(--cat-rest);
   --color-cat-meeting: var(--cat-meeting);
+  --color-cat-long-video: var(--cat-long-video);
+  --color-cat-short-video: var(--cat-short-video);
+  --color-cat-linkedin-post: var(--cat-linkedin-post);
+  --color-cat-youtube-post: var(--cat-youtube-post);
+  --color-cat-live-video: var(--cat-live-video);
+  --color-cat-twitter-post: var(--cat-twitter-post);
+  --color-cat-newsletter: var(--cat-newsletter);
+  --color-cat-podcast: var(--cat-podcast);
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -116,6 +124,14 @@
   --cat-admin: oklch(0.55 0.02 250);
   --cat-rest: oklch(0.7 0.05 140);
   --cat-meeting: oklch(0.62 0.14 195);
+  --cat-long-video: oklch(0.64 0.18 35);
+  --cat-short-video: oklch(0.69 0.15 162);
+  --cat-linkedin-post: oklch(0.6 0.12 240);
+  --cat-youtube-post: oklch(0.6 0.22 25);
+  --cat-live-video: oklch(0.55 0.18 300);
+  --cat-twitter-post: oklch(0.78 0.16 75);
+  --cat-newsletter: oklch(0.7 0.14 350);
+  --cat-podcast: oklch(0.55 0.02 250);
 }
 
 .dark {

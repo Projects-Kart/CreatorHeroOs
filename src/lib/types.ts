@@ -8,7 +8,15 @@ export type Category =
   | "engagement"
   | "admin"
   | "rest"
-  | "meeting";
+  | "meeting"
+  | "long-video"
+  | "short-video"
+  | "linkedin-post"
+  | "youtube-post"
+  | "live-video"
+  | "twitter-post"
+  | "newsletter"
+  | "podcast";
 
 export const CATEGORIES: { id: Category; label: string; token: string }[] = [
   { id: "scripting", label: "Scripting", token: "cat-scripting" },
@@ -21,34 +29,104 @@ export const CATEGORIES: { id: Category; label: string; token: string }[] = [
   { id: "admin", label: "Admin", token: "cat-admin" },
   { id: "rest", label: "Rest", token: "cat-rest" },
   { id: "meeting", label: "Meeting", token: "cat-meeting" },
+  { id: "long-video", label: "Long Video", token: "cat-long-video" },
+  { id: "short-video", label: "Short Video", token: "cat-short-video" },
+  { id: "linkedin-post", label: "LinkedIn Post", token: "cat-linkedin-post" },
+  { id: "youtube-post", label: "YouTube Post", token: "cat-youtube-post" },
+  { id: "live-video", label: "Live Video", token: "cat-live-video" },
+  { id: "twitter-post", label: "Twitter/X Post", token: "cat-twitter-post" },
+  { id: "newsletter", label: "Newsletter", token: "cat-newsletter" },
+  { id: "podcast", label: "Podcast", token: "cat-podcast" },
 ];
 
-export type Priority = "low" | "medium" | "high" | "urgent";
+export type VideoPriority = "low" | "medium" | "high" | "urgent";
+export type TaskPriority = "optional" | "normal" | "required";
+export type TaskType = "standard" | "meeting" | "other";
 
-export type TaskType = "standard" | "meeting" | "milestone" | "habit";
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
 
-export type Task = {
+export interface Task {
   id: string;
   title: string;
   description?: string;
-  category: Category;
-  priority: Priority;
+  category: string; // References a category ID
+  priority: TaskPriority;
   type: TaskType;
+  
+  // Date and Time
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  time?: string; // e.g. "10:30 AM"
+
   estimatedMinutes?: number;
   actualMinutes?: number;
-  dueDate: string; // ISO date (yyyy-mm-dd)
-  dueTime?: string; // HH:mm
-  completed: boolean;
-  completedAt?: string;
-  subtasks: { id: string; title: string; done: boolean }[];
-  videoId?: string;
-  goalId?: string;
-  recurrence?: "none" | "daily" | "weekly" | "monthly";
-  // Meeting-specific
+  
+  // Meeting specific fields
   meetingLink?: string;
   meetingLocation?: string;
-  attendees?: string; // comma-separated
+  attendees?: string;
+
+  // Status & Recurrence
+  completed: boolean;
+  recurrence: "none" | "daily" | "weekly" | "monthly";
+  recurrenceDays?: string[]; // e.g. ["Mon", "Wed", "Fri"]
+  
+  createdAt: string;
+  completedAt?: string;
+  
+  subtasks: Subtask[];
+  videoId?: string;
+  goalId?: string;
 };
+
+export function isTaskActiveOnDate(task: Task, dateStr: string): boolean {
+  // Parse dates safely as local time to avoid timezone shifts
+  const parseLocal = (d: string) => {
+    const [y, m, day] = d.split("-").map(Number);
+    return new Date(y, m - 1, day);
+  };
+
+  const targetDate = parseLocal(dateStr);
+  const start = parseLocal(task.startDate);
+  
+  targetDate.setHours(0,0,0,0);
+  start.setHours(0,0,0,0);
+  
+  // Tasks never appear before their start date
+  if (targetDate.getTime() < start.getTime()) return false;
+  
+  // Determine if we should enforce the end date
+  const hasExplicitEndDate = task.endDate && task.endDate !== task.startDate;
+  
+  if (hasExplicitEndDate) {
+    const end = parseLocal(task.endDate);
+    end.setHours(0,0,0,0);
+    if (targetDate.getTime() > end.getTime()) return false;
+  } else if (task.recurrence === "none" && task.endDate) {
+    // If it's a one-time task and has an end date, enforce it
+    const end = parseLocal(task.endDate);
+    end.setHours(0,0,0,0);
+    if (targetDate.getTime() > end.getTime()) return false;
+  }
+  
+  if (task.recurrence === "daily") return true;
+  if (task.recurrence === "weekly" && task.recurrenceDays && task.recurrenceDays.length > 0) {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const currentDay = days[targetDate.getDay()];
+    return task.recurrenceDays.includes(currentDay);
+  }
+  
+  // If it's a non-recurring task, it's active on any day between its start and end date (inclusive)
+  if (task.recurrence === "none") {
+    return true; 
+  }
+  
+  return false;
+}
 
 // ── Goal types ────────────────────────────────────────────────────────────────
 
@@ -104,7 +182,7 @@ export type Video = {
   series?: string;
   publishDate?: string;
   estimatedLength?: number; // minutes
-  priority: Priority;
+  priority: VideoPriority;
   metrics?: { views?: number; likes?: number; comments?: number; ctr?: number; avd?: number };
   createdAt: string;
 };

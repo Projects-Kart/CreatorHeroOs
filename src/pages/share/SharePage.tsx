@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { resolveShareToken, getPublicUserData, type ShareToken } from "@/lib/firestore";
 import type { Task, Goal, Video } from "@/lib/types";
-import { PIPELINE_STAGES } from "@/lib/types";
+import { isTaskActiveOnDate, PIPELINE_STAGES } from "@/lib/types";
 import { Eye, Flame, Target, Film, CheckSquare, Lock } from "lucide-react";
 
 type SharedData = {
@@ -105,8 +105,8 @@ export function SharePage({ token }: SharePageProps) {
 
   const { meta, tasks, goals, videos } = data;
   const today = todayKey();
-  const todayTasks = tasks.filter((t) => t.dueDate === today);
-  const doneTasks = todayTasks.filter((t) => t.completed);
+  const todaysTasks = tasks.filter((t) => isTaskActiveOnDate(t, today));
+  const doneTasks = todaysTasks.filter((t) => t.completed);
   const streak = computeStreak(tasks);
 
   return (
@@ -156,12 +156,12 @@ export function SharePage({ token }: SharePageProps) {
 
         {/* ── Today's Tasks ──────────────────────────────── */}
         <div style={{ gridColumn: "1 / -1" }}>
-          <SectionHeader icon={<CheckSquare style={{ width: 18, height: 18 }} />} title="Today's Tasks" badge={`${doneTasks.length}/${todayTasks.length} done`} />
-          {todayTasks.length === 0 ? (
+          <SectionHeader icon={<CheckSquare style={{ width: 18, height: 18 }} />} title="Today's Tasks" badge={`${doneTasks.length}/${todaysTasks.length} done`} />
+          {todaysTasks.length === 0 ? (
             <EmptyState text="No tasks scheduled for today." />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {todayTasks.map((task) => (
+              {todaysTasks.map((task) => (
                 <div key={task.id} style={{
                   display: "flex", alignItems: "center", gap: "0.875rem",
                   padding: "0.75rem 1rem", borderRadius: "0.625rem",

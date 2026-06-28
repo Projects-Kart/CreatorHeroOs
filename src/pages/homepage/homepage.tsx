@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/AppShell";
 import { useStore, computeStreak } from "@/lib/store";
-import { CATEGORIES } from "@/lib/types";
+import { CATEGORIES, isTaskActiveOnDate } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,13 +17,13 @@ function todayKey() {
 export function Dashboard() {
   const { tasks, goals, videos, toggleTask, addCheckin, checkins } = useStore();
   const today = todayKey();
-  const todays = tasks.filter((t) => t.dueDate === today);
+  const todays = tasks.filter((t) => isTaskActiveOnDate(t, today));
   const done = todays.filter((t) => t.completed);
   const streak = computeStreak(tasks);
 
   const upcoming = [...tasks]
-    .filter((t) => !t.completed && t.dueDate >= today)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+    .filter((t) => !t.completed && t.endDate >= today)
+    .sort((a, b) => a.endDate.localeCompare(b.endDate))
     .slice(0, 3);
 
   const estimated = todays.reduce((s, t) => s + (t.estimatedMinutes ?? 0), 0);
@@ -67,9 +67,9 @@ export function Dashboard() {
                           <span className="h-1.5 w-1.5 rounded-full shadow-sm" style={{ backgroundColor: `var(--${cat.token})` }} />
                           {cat.label}
                         </span>
-                        {t.dueTime && <span className="flex items-center">· {t.dueTime}</span>}
+                        {t.time && <span className="flex items-center">· {t.time}</span>}
                         {t.estimatedMinutes && <span className="flex items-center">· {t.estimatedMinutes}m</span>}
-                        {t.priority === "urgent" && <span className="text-destructive font-semibold flex items-center gap-1">· urgent</span>}
+                        {t.priority === "required" && <span className="text-destructive font-semibold flex items-center gap-1">· required</span>}
                       </div>
                     </div>
                   </li>
@@ -89,7 +89,7 @@ export function Dashboard() {
                     <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
                     <span className="truncate font-medium">{t.title}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0 ml-3 bg-secondary px-2 py-1 rounded-md">{t.dueDate}</span>
+                  <span className="text-xs text-muted-foreground shrink-0 ml-3 bg-secondary px-2 py-1 rounded-md">{t.endDate}</span>
                 </li>
               ))}
               {upcoming.length === 0 && <li className="text-sm text-muted-foreground py-2">All clear.</li>}

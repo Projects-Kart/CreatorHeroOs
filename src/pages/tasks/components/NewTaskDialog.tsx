@@ -1,28 +1,36 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import { type Task, CATEGORIES, type Priority, type TaskType } from "@/lib/types";
+import { type Task, CATEGORIES, type TaskPriority, type TaskType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, X, Video, Users, Calendar, Clock, RotateCcw, ListTodo, Flag, Milestone, RepeatIcon } from "lucide-react";
+import { Plus, X, Video, Users, Calendar, Clock, RotateCcw, ListTodo, Flag, RepeatIcon, Circle } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-const PRIORITIES: { value: Priority; label: string; color: string }[] = [
-  { value: "low", label: "Low", color: "text-green-500" },
-  { value: "medium", label: "Medium", color: "text-yellow-500" },
-  { value: "high", label: "High", color: "text-orange-500" },
-  { value: "urgent", label: "Urgent", color: "text-red-500" },
+const PRIORITIES: { value: TaskPriority; label: string; color: string }[] = [
+  { value: "optional", label: "Optional", color: "text-green-500" },
+  { value: "normal", label: "Normal", color: "text-blue-500" },
+  { value: "required", label: "Required", color: "text-red-500" },
 ];
 
 const TASK_TYPES: { value: TaskType; label: string; icon: typeof ListTodo; desc: string }[] = [
   { value: "standard", label: "Standard", icon: ListTodo, desc: "Regular task" },
   { value: "meeting", label: "Meeting", icon: Users, desc: "Call or sync" },
-  { value: "milestone", label: "Milestone", icon: Milestone, desc: "Key checkpoint" },
-  { value: "habit", label: "Habit", icon: RepeatIcon, desc: "Daily ritual" },
+  { value: "other", label: "Other", icon: Circle, desc: "Other type" },
+];
+
+const WEEK_DAYS = [
+  { id: "Sun", label: "S" },
+  { id: "Mon", label: "M" },
+  { id: "Tue", label: "T" },
+  { id: "Wed", label: "W" },
+  { id: "Thu", label: "T" },
+  { id: "Fri", label: "F" },
+  { id: "Sat", label: "S" },
 ];
 
 export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
@@ -34,14 +42,16 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
   const [description, setDescription] = useState("");
   const [type, setType] = useState<TaskType>("standard");
   const [category, setCategory] = useState<Task["category"]>("scripting");
-  const [priority, setPriority] = useState<Priority>("medium");
-  const [dueDate, setDueDate] = useState(defaultDate || new Date().toISOString().slice(0, 10));
-  const [dueTime, setDueTime] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("normal");
+  const [startDate, setStartDate] = useState(defaultDate || new Date().toISOString().slice(0, 10));
+  const [endDate, setEndDate] = useState(defaultDate || new Date().toISOString().slice(0, 10));
+  const [time, setTime] = useState("");
   const [est, setEst] = useState("");
   const [recurrence, setRecurrence] = useState<Task["recurrence"]>("none");
+  const [recurrenceDays, setRecurrenceDays] = useState<string[]>([]);
 
   // Subtasks
-  const [subtasks, setSubtasks] = useState<{ id: string; title: string; done: boolean }[]>([]);
+  const [subtasks, setSubtasks] = useState<{ id: string; title: string; completed: boolean }[]>([]);
   const [newSub, setNewSub] = useState("");
 
   // Meeting fields
@@ -51,38 +61,50 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
 
   const addSubtask = () => {
     if (!newSub.trim()) return;
-    setSubtasks((s) => [...s, { id: uid(), title: newSub.trim(), done: false }]);
+    setSubtasks((s) => [...s, { id: uid(), title: newSub.trim(), completed: false }]);
     setNewSub("");
   };
 
   const removeSubtask = (id: string) => setSubtasks((s) => s.filter((x) => x.id !== id));
 
+  const toggleRecurrenceDay = (day: string) => {
+    setRecurrenceDays((prev) => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+  };
+
   const reset = () => {
     setTitle(""); setDescription(""); setType("standard");
-    setCategory("scripting"); setPriority("medium");
-    setDueDate(defaultDate || new Date().toISOString().slice(0, 10));
-    setDueTime(""); setEst(""); setRecurrence("none");
+    setCategory("scripting"); setPriority("normal");
+    setStartDate(defaultDate || new Date().toISOString().slice(0, 10));
+    setEndDate(defaultDate || new Date().toISOString().slice(0, 10));
+    setTime(""); setEst(""); setRecurrence("none"); setRecurrenceDays([]);
     setSubtasks([]); setNewSub("");
     setMeetingLink(""); setMeetingLocation(""); setAttendees("");
   };
 
   const submit = () => {
     if (!title.trim()) return;
-    addTask({
+    
+    const taskData: any = {
       title: title.trim(),
-      description: description.trim() || undefined,
       type,
       category: type === "meeting" ? "meeting" : category,
       priority,
-      dueDate,
-      dueTime: dueTime || undefined,
-      estimatedMinutes: parseInt(est) || undefined,
+      startDate,
+      endDate,
       recurrence,
       subtasks,
-      meetingLink: meetingLink.trim() || undefined,
-      meetingLocation: meetingLocation.trim() || undefined,
-      attendees: attendees.trim() || undefined,
-    });
+      createdAt: new Date().toISOString(),
+    };
+    
+    if (description.trim()) taskData.description = description.trim();
+    if (time) taskData.time = time;
+    if (parseInt(est)) taskData.estimatedMinutes = parseInt(est);
+    if (recurrence === "weekly" && recurrenceDays.length > 0) taskData.recurrenceDays = recurrenceDays;
+    if (meetingLink.trim()) taskData.meetingLink = meetingLink.trim();
+    if (meetingLocation.trim()) taskData.meetingLocation = meetingLocation.trim();
+    if (attendees.trim()) taskData.attendees = attendees.trim();
+
+    addTask(taskData);
     setOpen(false);
     reset();
   };
@@ -108,8 +130,8 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
           {/* Task Type Selector */}
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Type</Label>
-            <div className="grid grid-cols-4 gap-2">
-              {TASK_TYPES.map(({ value, label, icon: Icon, desc }) => (
+            <div className="grid grid-cols-3 gap-2">
+              {TASK_TYPES.map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
                   onClick={() => setType(value)}
@@ -184,7 +206,7 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Flag className="h-3 w-3" /> Priority
               </Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+              <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
                 <SelectTrigger className="font-medium">
                   <SelectValue />
                 </SelectTrigger>
@@ -214,18 +236,24 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
           </div>
 
           {/* Date / Time / Duration */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" /> Due Date
+                <Calendar className="h-3 w-3" /> Starting From
               </Label>
-              <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="font-medium" />
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="font-medium" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" /> Time
+                <Calendar className="h-3 w-3" /> End To
               </Label>
-              <Input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} className="font-medium" />
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="font-medium" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Time (AM/PM)
+              </Label>
+              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="font-medium" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -238,10 +266,10 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
           {/* Recurrence */}
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-              <RotateCcw className="h-3 w-3" /> Recurrence
+              <RotateCcw className="h-3 w-3" /> Repeat
             </Label>
             <div className="flex gap-2">
-              {(["none", "daily", "weekly", "monthly"] as const).map((r) => (
+              {(["none", "daily", "weekly"] as const).map((r) => (
                 <button
                   key={r}
                   onClick={() => setRecurrence(r)}
@@ -255,6 +283,25 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
                 </button>
               ))}
             </div>
+
+            {/* Weekly Days Selector */}
+            {recurrence === "weekly" && (
+              <div className="flex gap-1 mt-2">
+                {WEEK_DAYS.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => toggleRecurrenceDay(d.id)}
+                    className={`h-8 w-8 rounded-full border text-xs font-bold transition-all ${
+                      recurrenceDays.includes(d.id)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-secondary text-muted-foreground border-border hover:border-primary/50"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Subtasks */}

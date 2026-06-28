@@ -18,7 +18,7 @@ export function AnalyticsPage() {
       out.push({
         date: key.slice(5),
         completed: tasks.filter((t) => t.completed && t.completedAt?.startsWith(key)).length,
-        planned: tasks.filter((t) => t.dueDate === key).length,
+        planned: tasks.filter((t) => t.endDate === key).length,
       });
     }
     return out;

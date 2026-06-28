@@ -168,7 +168,7 @@ export function StoreProvider({ children, firebaseUid }: StoreProviderProps) {
     toggleSubtask: (taskId, subId) => {
       const task = state.tasks.find((t) => t.id === taskId);
       if (!task) return;
-      const subtasks = task.subtasks.map((x) => (x.id === subId ? { ...x, done: !x.done } : x));
+      const subtasks = task.subtasks.map((x) => (x.id === subId ? { ...x, completed: !x.completed } : x));
       updateTaskFS(firebaseUid, taskId, { subtasks }).catch(console.error);
     },
 
