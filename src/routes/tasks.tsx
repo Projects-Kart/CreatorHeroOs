@@ -4,7 +4,7 @@ import { TasksPage } from "@/pages/tasks/tasks";
 export const Route = createFileRoute("/tasks")({
   head: () => ({
     meta: [
-      { title: "Tasks — TimeTracker" },
+      { title: "Tasks — CreatorHeroOs" },
       { name: "description", content: "Execute your daily plan." },
     ],
   }),

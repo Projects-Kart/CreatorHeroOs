@@ -85,17 +85,31 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TimeTracker — Productivity for Content Creators" },
-      { name: "description", content: "Plan uploads, track goals, and manage your content pipeline in one focused workspace." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "TimeTracker — Productivity for Content Creators" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1" },
+      { title: "CreatorHeroOs — Productivity & Pipeline Management for Content Creators" },
+      { name: "description", content: "The ultimate dashboard to plan uploads, track goals, measure streaks, and manage your entire content pipeline in one beautiful, focused workspace." },
+      { name: "keywords", content: "content tracker, productivity, creator tools, pomodoro timer, task management, content pipeline, youtube planner" },
+      { name: "author", content: "CreatorHeroOs" },
+      { name: "theme-color", content: "#E35D43" },
+      { property: "og:title", content: "CreatorHeroOs — Productivity for Content Creators" },
       { property: "og:description", content: "Plan uploads, track goals, and manage your content pipeline in one focused workspace." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { property: "og:url", content: "https://creatorheroos.app" },
+      { property: "og:site_name", content: "CreatorHeroOs" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "CreatorHeroOs — Productivity & Pipeline Management" },
+      { name: "twitter:description", content: "The ultimate dashboard to plan uploads, track goals, and manage your entire content pipeline." },
     ],
     links: [
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱️</text></svg>",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱️</text></svg>",
+      },
       {
         rel: "stylesheet",
         href: appCss,

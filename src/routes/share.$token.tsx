@@ -4,7 +4,7 @@ import { SharePage } from "@/pages/share/SharePage";
 export const Route = createFileRoute("/share/$token")({
   head: () => ({
     meta: [
-      { title: "Shared Progress — TimeTracker" },
+      { title: "Shared Progress — CreatorHeroOs" },
       { name: "description", content: "View this creator's tasks, goals, and content pipeline." },
       { name: "robots", content: "noindex" },
     ],

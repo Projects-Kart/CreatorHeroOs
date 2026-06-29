@@ -4,7 +4,7 @@ import { ReviewPage } from "@/pages/review/review";
 export const Route = createFileRoute("/review")({
   head: () => ({
     meta: [
-      { title: "Review — TimeTracker" },
+      { title: "Review — CreatorHeroOs" },
       { name: "description", content: "Daily reflection and journaling." },
     ],
   }),

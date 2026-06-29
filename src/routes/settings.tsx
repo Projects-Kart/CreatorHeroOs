@@ -4,7 +4,7 @@ import { SettingsPage } from "@/pages/settings/settings";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — TimeTracker" },
+      { title: "Settings — CreatorHeroOs" },
       { name: "description", content: "Manage preferences and local data." },
     ],
   }),

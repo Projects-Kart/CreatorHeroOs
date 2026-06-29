@@ -96,7 +96,7 @@ export function SharePage({ token }: SharePageProps) {
               borderRadius: "0.5rem", textDecoration: "none", fontSize: "0.875rem", fontWeight: 600,
             }}
           >
-            Go to TimeTracker
+            Go to CreatorHeroOs
           </a>
         </div>
       </div>
@@ -230,7 +230,7 @@ export function SharePage({ token }: SharePageProps) {
 
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "2rem", borderTop: "1px solid hsl(var(--border) / 0.4)", color: "hsl(var(--muted-foreground))", fontSize: "0.8125rem" }}>
-        Powered by <a href="/" style={{ color: "hsl(var(--primary))", textDecoration: "none", fontWeight: 600 }}>TimeTracker</a>
+        Powered by <a href="/" style={{ color: "hsl(var(--primary))", textDecoration: "none", fontWeight: 600 }}>CreatorHeroOs</a>
         {" · "}Shared by {meta.ownerName} · View-only
       </div>
     </div>

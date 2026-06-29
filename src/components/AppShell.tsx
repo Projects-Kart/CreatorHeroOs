@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link to="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground grid place-items-center font-bold">T</div>
             <div>
-              <div className="font-semibold tracking-tight leading-none">TimeTracker</div>
+              <div className="font-semibold tracking-tight leading-none">CreatorHeroOs</div>
               <div className="text-[11px] text-muted-foreground mt-1">{settings.channelName}</div>
             </div>
           </Link>

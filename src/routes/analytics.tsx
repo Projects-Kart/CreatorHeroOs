@@ -4,9 +4,9 @@ import { AnalyticsPage } from "@/pages/analytics/analytics";
 export const Route = createFileRoute("/analytics")({
   head: () => ({
     meta: [
-      { title: "Analytics — TimeTracker" },
+      { title: "Analytics — CreatorHeroOs" },
       { name: "description", content: "See where time goes, when you're most productive, and how effort maps to growth." },
-      { property: "og:title", content: "Analytics — TimeTracker" },
+      { property: "og:title", content: "Analytics — CreatorHeroOs" },
       { property: "og:description", content: "Connect tasks completed to channel growth." },
     ],
   }),

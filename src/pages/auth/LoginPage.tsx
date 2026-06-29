@@ -23,7 +23,7 @@ export function LoginPage() {
           Welcome back
         </h2>
         <p className="text-muted-foreground text-sm mb-8">
-          Sign in with your Google account to continue to TimeTracker.
+          Sign in with your Google account to continue to CreatorHeroOs.
         </p>
 
         {/* Google Sign-In Button */}
