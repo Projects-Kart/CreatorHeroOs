@@ -1,11 +1,12 @@
 import { type Task, CATEGORIES, isTaskCompletedOnDate } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Trash2, CalendarX, Clock, Calendar, RepeatIcon, MapPin, Users, Video, MoreVertical } from "lucide-react";
+import { Trash2, CalendarX, Clock, Calendar, RepeatIcon, MapPin, Users, Video, MoreVertical, Edit2, Share, AlignLeft, Target, Flag, AlertTriangle, Activity, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Props {
   task: Task | null;
@@ -26,7 +27,6 @@ export function TaskDetailsDialog({ task, date, onClose }: Props) {
   };
 
   const handleStopFutureReminders = () => {
-    // Set endDate to yesterday to stop future reminders
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     updateTask(task.id, { endDate: yesterday.toISOString().slice(0, 10) });
@@ -35,6 +35,20 @@ export function TaskDetailsDialog({ task, date, onClose }: Props) {
 
   const contextDate = date || new Date().toISOString().slice(0, 10);
   const isCompleted = isTaskCompletedOnDate(task, contextDate);
+  const isOverdue = !isCompleted && task.endDate < contextDate;
+
+  let statusText = "To Do";
+  let statusColor = "bg-muted text-muted-foreground";
+  if (isCompleted) {
+    statusText = "Completed";
+    statusColor = "bg-success/15 text-success";
+  } else if (isOverdue) {
+    statusText = "Overdue";
+    statusColor = "bg-destructive/15 text-destructive";
+  } else if (task.startDate <= contextDate && task.endDate >= contextDate) {
+    statusText = "Doing";
+    statusColor = "bg-primary/15 text-primary";
+  }
 
   const handleToggleComplete = () => {
     if (!isCompleted && task.subtasks?.length > 0) {
@@ -42,142 +56,201 @@ export function TaskDetailsDialog({ task, date, onClose }: Props) {
       updateTask(task.id, { subtasks: updatedSubtasks });
     }
     toggleTask(task.id, contextDate);
-    onClose();
+    // Don't close so they can see it completed
   };
 
   const hasSubs = task.subtasks && task.subtasks.length > 0;
   const doneSubs = task.subtasks?.filter(s => s.completed || (s as any).done)?.length || 0;
+  const progressPercent = hasSubs ? Math.round((doneSubs / task.subtasks.length) * 100) : (isCompleted ? 100 : 0);
+
+  const priorityColor = task.priority === 'required' ? 'bg-rose-500 text-white' : task.priority === 'normal' ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white';
 
   return (
-    <Dialog open={!!task} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md bg-card border-border/50 shadow-2xl p-0 overflow-hidden sm:rounded-2xl">
-        <DialogHeader className="p-6 pb-4 bg-secondary/20">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide
-              ${task.priority === "required" ? "text-red-500 bg-red-500/10" : 
-                task.priority === "optional" ? "text-green-500 bg-green-500/10" : "text-blue-500 bg-blue-500/10"}`}>
-              {task.priority}
-            </span>
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium"
-              style={{ backgroundColor: `color-mix(in oklab, var(--${category.token}) 15%, transparent)`, color: `var(--${category.token})` }}>
-              {category.label}
-            </span>
-            {task.recurrence && task.recurrence !== "none" && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-semibold flex items-center gap-1">
-                <RepeatIcon className="h-2.5 w-2.5" /> 
-                {task.recurrence}
-                {task.recurrence === "weekly" && task.recurrenceDays && task.recurrenceDays.length > 0 && (
-                  <span className="ml-0.5 opacity-70">
-                    ({task.recurrenceDays.join(", ")})
-                  </span>
+    <Sheet open={!!task} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="w-full sm:w-[500px] sm:max-w-none p-0 flex flex-col gap-0 border-l border-border/50 bg-background overflow-hidden [&>button.absolute]:hidden">
+        
+        {/* Custom Header Actions */}
+        <div className="flex items-center justify-between p-4 border-b border-border/50 bg-card">
+          <div className="flex items-center gap-2">
+            <SheetClose asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
+              <Edit2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
+              <Share className="h-4 w-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {task.recurrence && task.recurrence !== "none" && (
+                  <DropdownMenuItem onClick={handleStopFutureReminders} className="text-warning focus:text-warning focus:bg-warning/10 cursor-pointer">
+                    <CalendarX className="h-4 w-4 mr-2" /> Stop Future Reminders
+                  </DropdownMenuItem>
                 )}
-              </span>
-            )}
+                <DropdownMenuItem onClick={handleDeleteTask} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete Task
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <DialogTitle className="text-xl font-bold">{task.title}</DialogTitle>
-          {task.description && (
-            <p className="text-sm text-muted-foreground mt-2">{task.description}</p>
-          )}
-        </DialogHeader>
-
-        <div className="p-6 space-y-5">
-          {/* Timeline and Details */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-start gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="font-semibold">Timeline</p>
-                <p className="text-muted-foreground text-xs">{task.startDate} to {task.endDate || task.startDate}</p>
-              </div>
-            </div>
-            {(task.time || task.estimatedMinutes) && (
-              <div className="flex items-start gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="font-semibold">Time</p>
-                  <p className="text-muted-foreground text-xs">
-                    {task.time}{task.time && task.estimatedMinutes && " • "}{task.estimatedMinutes && `${task.estimatedMinutes}m`}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Meeting Details */}
-          {task.type === "meeting" && (
-            <div className="bg-[var(--cat-meeting)]/10 text-[var(--cat-meeting)] rounded-xl p-4 space-y-2">
-              <h4 className="font-bold text-sm flex items-center gap-1"><Users className="h-4 w-4"/> Meeting Info</h4>
-              {task.meetingLink && (
-                <a href={task.meetingLink} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs hover:underline">
-                  <Video className="h-3 w-3" /> {task.meetingLink}
-                </a>
-              )}
-              {task.meetingLocation && (
-                <div className="flex items-center gap-2 text-xs"><MapPin className="h-3 w-3" /> {task.meetingLocation}</div>
-              )}
-              {task.attendees && (
-                <div className="flex items-center gap-2 text-xs"><Users className="h-3 w-3" /> {task.attendees}</div>
-              )}
-            </div>
-          )}
-
-          {/* Subtasks */}
-          {hasSubs && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-bold text-sm">Subtasks</h4>
-                <span className="text-xs text-muted-foreground">{doneSubs}/{task.subtasks.length} done</span>
-              </div>
-              <div className="space-y-2 bg-secondary/20 p-3 rounded-xl border border-border/50">
-                {task.subtasks.map((s) => {
-                  const isDone = s.completed || (s as any).done;
-                  return (
-                    <div key={s.id} className="flex items-center gap-3">
-                      <Checkbox
-                        checked={isDone}
-                        onCheckedChange={() => toggleSubtask(task.id, s.id)}
-                        className="h-4 w-4 rounded"
-                      />
-                      <span className={`text-sm ${isDone ? "line-through text-muted-foreground" : "text-foreground/90"}`}>
-                        {s.title}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
-        <DialogFooter className="p-6 pt-0 flex-row items-center justify-between gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="shrink-0 text-muted-foreground hover:text-foreground">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {task.recurrence && task.recurrence !== "none" && (
-                <DropdownMenuItem onClick={handleStopFutureReminders} className="text-warning focus:text-warning focus:bg-warning/10 cursor-pointer">
-                  <CalendarX className="h-4 w-4 mr-2" /> Stop Future Reminders
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={handleDeleteTask} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
-                <Trash2 className="h-4 w-4 mr-2" /> Hard Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 space-y-6">
+            
+            {/* Title */}
+            <SheetHeader>
+              <SheetTitle className="text-3xl font-black tracking-tight">{task.title}</SheetTitle>
+            </SheetHeader>
 
+            {/* Metadata Grid */}
+            <div className="grid grid-cols-[120px_1fr] gap-y-4 items-center text-[13px]">
+              
+              <div className="text-muted-foreground flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" /> Priority
+              </div>
+              <div>
+                <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs capitalize ${priorityColor}`}>
+                  {task.priority === "required" ? "High" : task.priority === "normal" ? "Medium" : "Low"}
+                </span>
+              </div>
+
+              <div className="text-muted-foreground flex items-center gap-2">
+                <Target className="h-4 w-4" /> Status
+              </div>
+              <div>
+                <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs ${statusColor}`}>
+                  {statusText}
+                </span>
+              </div>
+
+              <div className="text-muted-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4" /> Start date
+              </div>
+              <div className="font-medium text-foreground">
+                {new Date(task.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+
+              <div className="text-muted-foreground flex items-center gap-2">
+                <CalendarX className="h-4 w-4" /> Due date
+              </div>
+              <div className="font-medium text-foreground">
+                {new Date(task.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+
+              <div className="text-muted-foreground flex items-center gap-2">
+                <Activity className="h-4 w-4" /> Progress
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                  <div className={`h-full transition-all duration-500 ${isCompleted ? 'bg-success' : 'bg-primary'}`} style={{ width: `${progressPercent}%` }} />
+                </div>
+                <span className="text-xs font-bold w-8">{progressPercent}%</span>
+              </div>
+
+              <div className="text-muted-foreground flex items-center gap-2">
+                <Users className="h-4 w-4" /> Category
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-secondary text-foreground border border-border/50">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: `var(--${category.token})` }} />
+                  {category.label}
+                </span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="bg-secondary/40 p-4 rounded-xl border border-border/50">
+              <h4 className="text-[11px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
+                <AlignLeft className="h-3.5 w-3.5" /> Description
+              </h4>
+              <p className="text-sm leading-relaxed text-foreground/90">
+                {task.description || <span className="italic text-muted-foreground">No description provided.</span>}
+              </p>
+            </div>
+
+            {/* Tabs */}
+            <Tabs defaultValue="subtasks" className="w-full">
+              <TabsList className="w-full justify-start rounded-none border-b border-border/50 bg-transparent p-0 h-auto gap-4">
+                <TabsTrigger value="subtasks" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-2 py-3">
+                  Subtasks <span className="ml-2 bg-primary/10 text-primary px-1.5 py-0.5 rounded-sm text-[10px] font-bold">{hasSubs ? task.subtasks.length : 0}</span>
+                </TabsTrigger>
+                <TabsTrigger value="comments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-2 py-3">
+                  Comments <span className="ml-2 bg-secondary px-1.5 py-0.5 rounded-sm text-[10px] font-bold">0</span>
+                </TabsTrigger>
+                <TabsTrigger value="activities" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-2 py-3">
+                  Activities
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="subtasks" className="pt-6 outline-none">
+                {hasSubs ? (
+                  <div className="space-y-4">
+                    {task.subtasks.map((s) => {
+                      const isDone = s.completed || (s as any).done;
+                      return (
+                        <div key={s.id} className="flex items-start gap-3 group">
+                          <Checkbox
+                            checked={isDone}
+                            onCheckedChange={() => toggleSubtask(task.id, s.id)}
+                            className="mt-0.5 h-4 w-4 rounded-[4px] border-border/50 data-[state=checked]:bg-success data-[state=checked]:border-success transition-all shadow-sm"
+                          />
+                          <div className="flex-1">
+                            <p className={`text-sm font-semibold transition-colors ${isDone ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                              {s.title}
+                            </p>
+                            {isDone && <p className="text-[10px] text-muted-foreground mt-1">Completed</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-sm font-medium">No subtasks found.</p>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="comments" className="pt-6">
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm font-medium">No comments yet.</p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="activities" className="pt-6">
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm font-medium">No recent activities.</p>
+                </div>
+              </TabsContent>
+            </Tabs>
+            
+          </div>
+        </div>
+
+        {/* Footer Action */}
+        <div className="p-4 border-t border-border/50 bg-card">
           <Button 
             variant="default" 
             onClick={handleToggleComplete} 
-            className={`flex-1 sm:flex-none sm:w-auto ${isCompleted ? "bg-secondary text-foreground hover:bg-secondary/80" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+            className={`w-full py-6 font-bold text-[15px] ${isCompleted ? "bg-secondary text-foreground hover:bg-secondary/80" : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"}`}
           >
-            <CheckCircle2 className="h-4 w-4 mr-2" /> 
-            {isCompleted ? "Mark Incomplete" : "Mark Complete"}
+            <CheckCircle2 className="h-5 w-5 mr-2" /> 
+            {isCompleted ? "Mark Task Incomplete" : "Mark Task Complete"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+
+      </SheetContent>
+    </Sheet>
   );
 }

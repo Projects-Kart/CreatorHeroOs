@@ -33,7 +33,7 @@ const WEEK_DAYS = [
   { id: "Sat", label: "S" },
 ];
 
-export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
+export function NewTaskDialog({ defaultDate, trigger }: { defaultDate?: string, trigger?: React.ReactNode }) {
   const { addTask, goals } = useStore();
   const [open, setOpen] = useState(false);
 
@@ -117,9 +117,11 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
       <DialogTrigger asChild>
-        <Button className="shadow-md hover:shadow-lg transition-all active:scale-95 bg-primary text-primary-foreground">
-          <Plus className="h-4 w-4 mr-2" />New task
-        </Button>
+        {trigger || (
+          <Button className="shadow-md hover:shadow-lg transition-all active:scale-95 bg-primary text-primary-foreground">
+            <Plus className="h-4 w-4 mr-2" />New task
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[580px] backdrop-blur-xl bg-card/95 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
