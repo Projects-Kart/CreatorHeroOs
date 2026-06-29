@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { CATEGORIES, isTaskCompletedOnDate, type Task } from "@/lib/types";
+import { CATEGORIES, isTaskCompletedOnDate, isTaskActiveOnDate, type Task } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,13 +31,31 @@ export function TasksPage() {
   const totalTasksDone = tasks.filter(t => isTaskCompletedOnDate(t, today)).length;
   const overdueCount = tasks.filter(t => !isTaskCompletedOnDate(t, today) && t.endDate < today).length;
 
+  // Helper to determine task status
+  const getTaskStatus = (t: Task, targetDate: string) => {
+    const isCompleted = isTaskCompletedOnDate(t, targetDate);
+    const isOverdue = !isCompleted && t.endDate < targetDate;
+    
+    let isTodo = false;
+    let isDoing = false;
+    
+    if (!isCompleted && !isOverdue) {
+      if (t.recurrence && t.recurrence !== 'none') {
+        isTodo = isTaskActiveOnDate(t, targetDate);
+      } else {
+        isTodo = t.startDate === targetDate;
+        isDoing = t.startDate < targetDate && t.endDate >= targetDate;
+      }
+    }
+    
+    return { isCompleted, isOverdue, isTodo, isDoing };
+  };
+
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => {
       if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
-      const isCompleted = isTaskCompletedOnDate(t, today);
-      const isOverdue = !isCompleted && t.endDate < today;
-      const isDoing = !isCompleted && !isOverdue && t.startDate < today && t.endDate >= today;
-      const isTodo = !isCompleted && !isOverdue && t.startDate === today;
+      
+      const { isCompleted, isOverdue, isTodo, isDoing } = getTaskStatus(t, today);
 
       if (filter === "todo") return isTodo;
       if (filter === "inprogress") return isDoing;
@@ -50,19 +68,17 @@ export function TasksPage() {
   // Tab counts
   const counts = useMemo(() => {
     return {
-      todo: tasks.filter(t => { const c = isTaskCompletedOnDate(t, today); return !c && t.startDate === today; }).length,
-      inprogress: tasks.filter(t => { const c = isTaskCompletedOnDate(t, today); return !c && t.startDate < today && t.endDate >= today; }).length,
-      overdue: tasks.filter(t => !isTaskCompletedOnDate(t, today) && t.endDate < today).length,
-      completed: tasks.filter(t => isTaskCompletedOnDate(t, today)).length,
+      todo: tasks.filter(t => getTaskStatus(t, today).isTodo).length,
+      inprogress: tasks.filter(t => getTaskStatus(t, today).isDoing).length,
+      overdue: tasks.filter(t => getTaskStatus(t, today).isOverdue).length,
+      completed: tasks.filter(t => getTaskStatus(t, today).isCompleted).length,
       all: tasks.length
     }
   }, [tasks, today]);
 
   const renderRow = (t: Task) => {
     const c = CATEGORIES.find((x) => x.id === t.category) ?? CATEGORIES[0];
-    const isCompleted = isTaskCompletedOnDate(t, today);
-    const isOverdue = !isCompleted && t.endDate < today;
-    const isDoing = !isCompleted && !isOverdue && t.startDate < today && t.endDate >= today;
+    const { isCompleted, isOverdue, isDoing } = getTaskStatus(t, today);
     
     // Status Badge
     let statusBadge = null;
