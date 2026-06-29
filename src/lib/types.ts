@@ -121,8 +121,22 @@ export function isTaskActiveOnDate(task: Task, dateStr: string): boolean {
     return task.recurrenceDays.includes(currentDay);
   }
   
-  // If it's a non-recurring task, it's active on any day between its start and end date (inclusive)
+  // If it's a non-recurring task, handle display logic
   if (task.recurrence === "none") {
+    // For content/pipeline-related tasks, only show them on their target (due) date
+    const contentCategories = [
+      "long-video", "short-video", "linkedin-post", "youtube-post", 
+      "live-video", "twitter-post", "newsletter", "podcast"
+    ];
+    
+    if (contentCategories.includes(task.category)) {
+      const targetStr = task.endDate || task.startDate;
+      const target = parseLocal(targetStr);
+      target.setHours(0,0,0,0);
+      return targetDate.getTime() === target.getTime();
+    }
+    
+    // For other non-recurring tasks, show on any day between start and end date (inclusive)
     return true; 
   }
   

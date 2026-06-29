@@ -1,58 +1,89 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/AppShell";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStore } from "@/lib/store";
-import { CATEGORIES, isTaskCompletedOnDate } from "@/lib/types";
+import { CATEGORIES, isTaskCompletedOnDate, isTaskActiveOnDate } from "@/lib/types";
 import { Card } from "@/components/ui/card";
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
-import { AlertTriangle, TrendingUp, Zap } from "lucide-react";
+import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid } from "recharts";
+import { AlertTriangle, TrendingUp, Zap, CheckCircle2, Clock } from "lucide-react";
 import { Stat } from "./components/Stat";
 
 export function AnalyticsPage() {
   const { tasks, checkins, videos, goals } = useStore();
+  const [dateRange, setDateRange] = useState<number>(14);
+
+  const cutoffStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - dateRange);
+    return d.toISOString().slice(0, 10);
+  }, [dateRange]);
 
   const days = useMemo(() => {
     const out: { date: string; completed: number; planned: number }[] = [];
-    for (let i = 13; i >= 0; i--) {
+    for (let i = dateRange - 1; i >= 0; i--) {
       const d = new Date(); d.setDate(d.getDate() - i);
       const key = d.toISOString().slice(0, 10);
       out.push({
         date: key.slice(5),
-        completed: tasks.filter((t) => isTaskCompletedOnDate(t, key)).length,
-        planned: tasks.filter((t) => t.endDate === key).length,
+        completed: tasks.filter((t) => {
+          if (t.completedDates?.includes(key)) return true;
+          if ((!t.recurrence || t.recurrence === "none") && t.completed && t.completedAt?.startsWith(key)) return true;
+          return false;
+        }).length,
+        planned: tasks.filter((t) => isTaskActiveOnDate(t, key)).length,
       });
     }
     return out;
-  }, [tasks]);
-
-  const byCategory = useMemo(() => {
-    return CATEGORIES.map((c) => {
-      const list = tasks.filter((t) => t.category === c.id && t.completed);
-      const minutes = list.reduce((s, t) => s + (t.actualMinutes ?? t.estimatedMinutes ?? 0), 0);
-      return { name: c.label, value: minutes, token: c.token };
-    }).filter((x) => x.value > 0);
-  }, [tasks]);
+  }, [tasks, dateRange]);
 
   const dayOfWeek = useMemo(() => {
     const counts = [0, 0, 0, 0, 0, 0, 0];
     tasks.forEach((t) => { 
-      if (t.completed && t.completedAt) counts[new Date(t.completedAt).getDay()]++; 
-      if (t.completedDates) t.completedDates.forEach((d) => counts[new Date(d).getDay()]++);
+      if (t.completed && t.completedAt && t.completedAt >= cutoffStr) {
+        counts[new Date(t.completedAt).getDay()]++; 
+      }
+      if (t.completedDates) {
+        t.completedDates.forEach((d) => {
+          if (d >= cutoffStr) counts[new Date(d).getDay()]++;
+        });
+      }
     });
     return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => ({ day: d, completed: counts[i] }));
-  }, [tasks]);
+  }, [tasks, cutoffStr]);
 
-  const completion = tasks.length ? (tasks.filter((t) => t.completed).length / tasks.length) * 100 : 0;
-  const consistencyScore = Math.round(completion);
+  const totalPlanned = days.reduce((acc, d) => acc + d.planned, 0);
+  const totalCompleted = days.reduce((acc, d) => acc + d.completed, 0);
+  const consistencyScore = totalPlanned ? Math.round((totalCompleted / totalPlanned) * 100) : 0;
+  
   const missedDays = days.filter((d) => d.planned > 0 && d.completed / d.planned < 0.5).length;
-  const recentMood = checkins.slice(-7).reduce((s, c) => s + c.mood, 0) / Math.max(1, checkins.slice(-7).length);
-  const burnoutRisk = missedDays >= 3 || recentMood < 2.5;
+  
+  const recentCheckins = checkins.filter(c => c.date >= cutoffStr);
+  const recentMood = recentCheckins.reduce((s, c) => s + c.mood, 0) / Math.max(1, recentCheckins.length);
+  const burnoutRisk = missedDays >= (dateRange > 14 ? 5 : 3) || (recentCheckins.length > 0 && recentMood < 2.5);
 
   const published = videos.filter((v) => v.stage === "published").length;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader title="Analytics" subtitle="Effort vs results. Spot patterns, prevent burnout." />
-      <div className="p-8 space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pr-8">
+        <PageHeader title="Analytics" subtitle="Effort vs results. Spot patterns, prevent burnout." />
+        <div className="flex items-center gap-2 px-8 sm:px-0 pb-4 sm:pb-0">
+          <span className="text-sm text-muted-foreground font-medium">Duration:</span>
+          <Select value={String(dateRange)} onValueChange={(v) => setDateRange(Number(v))}>
+            <SelectTrigger className="w-[140px] bg-background/50 backdrop-blur-sm border-white/10 shadow-sm">
+              <SelectValue placeholder="Select range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="14">Last 14 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="365">Last Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="p-8 space-y-8 pt-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           <Stat label="Consistency score" value={`${consistencyScore}%`} hint="Tasks completed / planned" icon={TrendingUp} />
           <Stat label="Published videos" value={String(published)} hint="In tracked pipeline" icon={Zap} />
@@ -61,8 +92,8 @@ export function AnalyticsPage() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <Card className="p-6 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl">
-            <h3 className="text-base font-semibold tracking-tight mb-6 flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Productivity over 14 days</h3>
+          <Card className="p-6 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl lg:col-span-2">
+            <h3 className="text-base font-semibold tracking-tight mb-6 flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Productivity over {dateRange} days</h3>
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={days} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -73,24 +104,6 @@ export function AnalyticsPage() {
                 <Line type="monotone" dataKey="completed" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: "var(--background)" }} activeDot={{ r: 6, strokeWidth: 0 }} />
               </LineChart>
             </ResponsiveContainer>
-          </Card>
-
-          <Card className="p-6 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl">
-            <h3 className="text-base font-semibold tracking-tight mb-6 flex items-center gap-2"><PieChart className="h-5 w-5 text-primary" /> Time by category</h3>
-            {byCategory.length === 0 ? (
-              <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground bg-secondary/20 rounded-lg border border-dashed border-border/50">
-                Complete a few tasks to see the breakdown.
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie data={byCategory} dataKey="value" nameKey="name" innerRadius={70} outerRadius={110} paddingAngle={4} cornerRadius={4}>
-                    {byCategory.map((c, i) => <Cell key={i} fill={`var(--${c.token})`} style={{ filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.1))" }} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: "rgba(var(--popover), 0.9)", backdropFilter: "blur(8px)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }} formatter={(v: any) => `${v}m`} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
           </Card>
 
           <Card className="p-6 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl">
@@ -143,6 +156,40 @@ export function AnalyticsPage() {
             </ul>
           </Card>
         </div>
+
+        <Card className="p-6 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl">
+          <h3 className="text-base font-semibold tracking-tight mb-6 flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-success" /> Today's Completions ({tasks.filter(t => isTaskCompletedOnDate(t, new Date().toISOString().slice(0, 10))).length})</h3>
+          {tasks.filter(t => isTaskCompletedOnDate(t, new Date().toISOString().slice(0, 10))).length === 0 ? (
+            <div className="flex h-24 items-center justify-center text-sm text-muted-foreground bg-secondary/20 rounded-lg border border-dashed border-border/50">
+              You haven't completed any tasks today.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {tasks.filter(t => isTaskCompletedOnDate(t, new Date().toISOString().slice(0, 10))).map((t) => {
+                const todayStr = new Date().toISOString().slice(0, 10);
+                let timeStr = "";
+                if (t.completedAt && t.completedAt.startsWith(todayStr)) {
+                  timeStr = new Date(t.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+                const c = CATEGORIES.find((x) => x.id === t.category) || CATEGORIES[0];
+                return (
+                  <div key={t.id} className="flex items-start gap-3 p-3 bg-secondary/30 rounded-xl border border-border/50 shadow-sm hover:border-primary/30 transition-colors">
+                    <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{t.title}</p>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-md" style={{ color: `var(--${c.token})`, backgroundColor: `color-mix(in oklab, var(--${c.token}) 15%, transparent)` }}>
+                          {c.label}
+                        </span>
+                        {timeStr && <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium"><Clock className="h-3 w-3" /> {timeStr}</span>}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </Card>
 
         <Card className="p-6 backdrop-blur-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-lg border-primary/20">
           <h3 className="text-base font-semibold tracking-tight text-primary flex items-center gap-2">

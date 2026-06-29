@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { type Task, CATEGORIES, type TaskPriority, type TaskType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, X, Video, Users, Calendar, Clock, RotateCcw, ListTodo, Flag, RepeatIcon, Circle, Target } from "lucide-react";
+import { Plus, X, Video, Users, Calendar, Clock, RotateCcw, ListTodo, Flag, RepeatIcon, Circle, Target, Edit2 } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -33,32 +33,70 @@ const WEEK_DAYS = [
   { id: "Sat", label: "S" },
 ];
 
-export function NewTaskDialog({ defaultDate, trigger }: { defaultDate?: string, trigger?: React.ReactNode }) {
-  const { addTask, goals } = useStore();
-  const [open, setOpen] = useState(false);
+export function NewTaskDialog({ defaultDate, trigger, editTask, open: controlledOpen, onOpenChange }: { defaultDate?: string, trigger?: React.ReactNode, editTask?: Task, open?: boolean, onOpenChange?: (open: boolean) => void }) {
+  const { addTask, updateTask, goals } = useStore();
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  
+  const setOpen = (v: boolean) => {
+    if (isControlled && onOpenChange) {
+      onOpenChange(v);
+    } else {
+      setInternalOpen(v);
+    }
+    if (!v) {
+      // Small delay to allow exit animation
+      setTimeout(() => reset(), 200);
+    }
+  };
 
   // Core fields
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState<TaskType>("standard");
-  const [category, setCategory] = useState<Task["category"]>("scripting");
-  const [priority, setPriority] = useState<TaskPriority>("normal");
-  const [goalId, setGoalId] = useState<string>("none");
-  const [startDate, setStartDate] = useState(defaultDate || new Date().toISOString().slice(0, 10));
-  const [endDate, setEndDate] = useState(defaultDate || new Date().toISOString().slice(0, 10));
-  const [time, setTime] = useState("");
-  const [est, setEst] = useState("");
-  const [recurrence, setRecurrence] = useState<Task["recurrence"]>("none");
-  const [recurrenceDays, setRecurrenceDays] = useState<string[]>([]);
+  const [title, setTitle] = useState(editTask?.title || "");
+  const [description, setDescription] = useState(editTask?.description || "");
+  const [type, setType] = useState<TaskType>(editTask?.type || "standard");
+  const [category, setCategory] = useState<Task["category"]>(editTask?.category || "scripting");
+  const [priority, setPriority] = useState<TaskPriority>(editTask?.priority || "normal");
+  const [goalId, setGoalId] = useState<string>(editTask?.goalId || "none");
+  const [startDate, setStartDate] = useState(editTask?.startDate || defaultDate || new Date().toISOString().slice(0, 10));
+  const [endDate, setEndDate] = useState(editTask?.endDate || defaultDate || new Date().toISOString().slice(0, 10));
+  const [time, setTime] = useState(editTask?.time || "");
+  const [est, setEst] = useState(editTask?.estimatedMinutes?.toString() || "");
+  const [recurrence, setRecurrence] = useState<Task["recurrence"]>(editTask?.recurrence || "none");
+  const [recurrenceDays, setRecurrenceDays] = useState<string[]>(editTask?.recurrenceDays || []);
 
   // Subtasks
-  const [subtasks, setSubtasks] = useState<{ id: string; title: string; completed: boolean }[]>([]);
+  const [subtasks, setSubtasks] = useState<{ id: string; title: string; completed: boolean }[]>(editTask?.subtasks || []);
   const [newSub, setNewSub] = useState("");
 
   // Meeting fields
-  const [meetingLink, setMeetingLink] = useState("");
-  const [meetingLocation, setMeetingLocation] = useState("");
-  const [attendees, setAttendees] = useState("");
+  const [meetingLink, setMeetingLink] = useState(editTask?.meetingLink || "");
+  const [meetingLocation, setMeetingLocation] = useState(editTask?.meetingLocation || "");
+  const [attendees, setAttendees] = useState(editTask?.attendees || "");
+
+  useEffect(() => {
+    if (open && editTask) {
+      setTitle(editTask.title || "");
+      setDescription(editTask.description || "");
+      setType(editTask.type || "standard");
+      setCategory(editTask.category || "scripting");
+      setPriority(editTask.priority || "normal");
+      setGoalId(editTask.goalId || "none");
+      setStartDate(editTask.startDate || defaultDate || new Date().toISOString().slice(0, 10));
+      setEndDate(editTask.endDate || defaultDate || new Date().toISOString().slice(0, 10));
+      setTime(editTask.time || "");
+      setEst(editTask.estimatedMinutes?.toString() || "");
+      setRecurrence(editTask.recurrence || "none");
+      setRecurrenceDays(editTask.recurrenceDays || []);
+      setSubtasks(editTask.subtasks || []);
+      setMeetingLink(editTask.meetingLink || "");
+      setMeetingLocation(editTask.meetingLocation || "");
+      setAttendees(editTask.attendees || "");
+    } else if (open && !editTask) {
+      reset();
+    }
+  }, [open, editTask]);
 
   const addSubtask = () => {
     if (!newSub.trim()) return;
@@ -73,14 +111,23 @@ export function NewTaskDialog({ defaultDate, trigger }: { defaultDate?: string, 
   };
 
   const reset = () => {
-    setTitle(""); setDescription(""); setType("standard");
-    setCategory("scripting"); setPriority("normal");
-    setStartDate(defaultDate || new Date().toISOString().slice(0, 10));
-    setEndDate(defaultDate || new Date().toISOString().slice(0, 10));
-    setTime(""); setEst(""); setRecurrence("none"); setRecurrenceDays([]);
-    setGoalId("none");
-    setSubtasks([]); setNewSub("");
-    setMeetingLink(""); setMeetingLocation(""); setAttendees("");
+    setTitle(editTask?.title || ""); 
+    setDescription(editTask?.description || ""); 
+    setType(editTask?.type || "standard");
+    setCategory(editTask?.category || "scripting"); 
+    setPriority(editTask?.priority || "normal");
+    setStartDate(editTask?.startDate || defaultDate || new Date().toISOString().slice(0, 10));
+    setEndDate(editTask?.endDate || defaultDate || new Date().toISOString().slice(0, 10));
+    setTime(editTask?.time || ""); 
+    setEst(editTask?.estimatedMinutes?.toString() || ""); 
+    setRecurrence(editTask?.recurrence || "none"); 
+    setRecurrenceDays(editTask?.recurrenceDays || []);
+    setGoalId(editTask?.goalId || "none");
+    setSubtasks(editTask?.subtasks || []); 
+    setNewSub("");
+    setMeetingLink(editTask?.meetingLink || ""); 
+    setMeetingLocation(editTask?.meetingLocation || ""); 
+    setAttendees(editTask?.attendees || "");
   };
 
   const submit = () => {
@@ -95,38 +142,44 @@ export function NewTaskDialog({ defaultDate, trigger }: { defaultDate?: string, 
       endDate,
       recurrence,
       subtasks,
-      createdAt: new Date().toISOString(),
     };
     
-    if (description.trim()) taskData.description = description.trim();
-    if (time) taskData.time = time;
-    if (parseInt(est)) taskData.estimatedMinutes = parseInt(est);
-    if (recurrence === "weekly" && recurrenceDays.length > 0) taskData.recurrenceDays = recurrenceDays;
-    if (meetingLink.trim()) taskData.meetingLink = meetingLink.trim();
-    if (meetingLocation.trim()) taskData.meetingLocation = meetingLocation.trim();
-    if (attendees.trim()) taskData.attendees = attendees.trim();
-    if (goalId && goalId !== "none") taskData.goalId = goalId;
+    taskData.description = description.trim();
+    taskData.time = time;
+    taskData.estimatedMinutes = est ? parseInt(est) : undefined;
+    taskData.recurrenceDays = recurrence === "weekly" ? recurrenceDays : [];
+    taskData.meetingLink = meetingLink.trim();
+    taskData.meetingLocation = meetingLocation.trim();
+    taskData.attendees = attendees.trim();
+    taskData.goalId = goalId && goalId !== "none" ? goalId : undefined;
 
-    addTask(taskData);
+    if (editTask) {
+      updateTask(editTask.id, taskData);
+    } else {
+      taskData.createdAt = new Date().toISOString();
+      addTask(taskData);
+    }
     setOpen(false);
-    reset();
   };
 
   const isMeeting = type === "meeting";
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button className="shadow-md hover:shadow-lg transition-all active:scale-95 bg-primary text-primary-foreground">
-            <Plus className="h-4 w-4 mr-2" />New task
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {(!isControlled || trigger) && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button className="shadow-md hover:shadow-lg transition-all active:scale-95 bg-primary text-primary-foreground">
+              <Plus className="h-4 w-4 mr-2" />New task
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[580px] backdrop-blur-xl bg-card/95 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-primary flex items-center gap-2">
-            <Plus className="h-5 w-5" /> Add Task
+            {editTask ? <Edit2 className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+            {editTask ? "Edit Task" : "Add Task"}
           </DialogTitle>
         </DialogHeader>
 
@@ -368,7 +421,7 @@ export function NewTaskDialog({ defaultDate, trigger }: { defaultDate?: string, 
         <DialogFooter className="border-t border-border/50 pt-4 gap-2">
           <Button variant="ghost" onClick={() => setOpen(false)} className="hover:bg-secondary/50">Cancel</Button>
           <Button onClick={submit} disabled={!title.trim()} className="bg-primary text-primary-foreground px-6">
-            Add Task
+            {editTask ? "Save Changes" : "Add Task"}
           </Button>
         </DialogFooter>
       </DialogContent>

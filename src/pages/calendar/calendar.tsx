@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/AppShell";
 import { useStore } from "@/lib/store";
-import { type Task, CATEGORIES, isTaskActiveOnDate, isTaskCompletedOnDate } from "@/lib/types";
+import { type Task, CATEGORIES, isTaskActiveOnDate, isTaskCompletedOnDate, PIPELINE_STAGES } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, PlayCircle, CheckCircle2, Clock } from "lucide-react";
@@ -85,11 +85,17 @@ export function CalendarPage() {
                       );
                     })}
                     {dayTasks.length > 3 && <div className="text-[10px] text-muted-foreground font-medium px-1">+{dayTasks.length - 3} more</div>}
-                    {dayVideos.map((v) => (
-                      <div key={v.id} className="text-[10px] truncate rounded px-1.5 py-0.5 bg-primary/20 text-primary font-bold flex items-center gap-1 shadow-sm">
-                        <PlayCircle className="h-3 w-3" /> {v.title}
-                      </div>
-                    ))}
+                    {dayVideos.map((v) => {
+                      const isPub = v.stage === "published";
+                      return (
+                        <div key={v.id} className={`text-[10px] truncate rounded px-1.5 py-0.5 font-bold flex items-center gap-1 shadow-sm ${
+                          isPub ? "bg-success/20 text-success line-through opacity-70" : "bg-primary/20 text-primary"
+                        }`}>
+                          {isPub ? <CheckCircle2 className="h-3 w-3 shrink-0" /> : <PlayCircle className="h-3 w-3 shrink-0" />} 
+                          <span className="truncate">{v.title}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </button>
               );
@@ -139,13 +145,31 @@ export function CalendarPage() {
               </div>
               {selectedVideos.length > 0 && (
                 <div className="mt-8">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-primary mb-3">Publishing</div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-primary mb-3">Deliverables</div>
                   <ul className="space-y-2">
-                    {selectedVideos.map((v) => (
-                      <li key={v.id} className="text-sm flex items-center gap-2 p-3 bg-primary/10 text-primary font-medium rounded-lg border border-primary/20 shadow-sm">
-                        <PlayCircle className="h-4 w-4" /> {v.title}
-                      </li>
-                    ))}
+                    {selectedVideos.map((v) => {
+                      const stageLabel = PIPELINE_STAGES.find(s => s.id === v.stage)?.label || v.stage;
+                      const isPublished = v.stage === "published";
+                      return (
+                        <li key={v.id} className={`text-sm flex flex-col gap-1 p-3 font-medium rounded-lg border shadow-sm ${
+                          isPublished 
+                            ? "bg-success/10 text-success border-success/20 line-through opacity-80"
+                            : "bg-primary/10 text-primary border-primary/20"
+                        }`}>
+                          <div className="flex items-center gap-2">
+                            {isPublished ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <PlayCircle className="h-4 w-4 shrink-0" />}
+                            <span className="truncate">{v.title}</span>
+                          </div>
+                          <div className="flex items-center gap-2 pl-6">
+                            <span className={`text-[10px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded-md ${
+                              isPublished ? "bg-success/20" : "bg-primary/20"
+                            }`}>
+                              {stageLabel}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}

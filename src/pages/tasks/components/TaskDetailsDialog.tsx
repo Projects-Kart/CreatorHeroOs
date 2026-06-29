@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { type Task, CATEGORIES, isTaskCompletedOnDate } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
@@ -7,6 +8,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NewTaskDialog } from "./NewTaskDialog";
 
 interface Props {
   task: Task | null;
@@ -16,6 +18,7 @@ interface Props {
 
 export function TaskDetailsDialog({ task, date, onClose }: Props) {
   const { deleteTask, updateTask, toggleSubtask, toggleTask } = useStore();
+  const [isEditing, setIsEditing] = useState(false);
 
   if (!task) return null;
 
@@ -66,22 +69,23 @@ export function TaskDetailsDialog({ task, date, onClose }: Props) {
   const priorityColor = task.priority === 'required' ? 'bg-rose-500 text-white' : task.priority === 'normal' ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white';
 
   return (
-    <Sheet open={!!task} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:w-[500px] sm:max-w-none p-0 flex flex-col gap-0 border-l border-border/50 bg-background overflow-hidden [&>button.absolute]:hidden">
-        
-        {/* Custom Header Actions */}
-        <div className="flex items-center justify-between p-4 border-b border-border/50 bg-card">
-          <div className="flex items-center gap-2">
-            <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
-                <X className="h-4 w-4" />
+    <>
+      <Sheet open={!!task} onOpenChange={(open) => !open && onClose()}>
+        <SheetContent className="w-full sm:w-[500px] sm:max-w-none p-0 flex flex-col gap-0 border-l border-border/50 bg-background overflow-hidden [&>button.absolute]:hidden">
+          
+          {/* Custom Header Actions */}
+          <div className="flex items-center justify-between p-4 border-b border-border/50 bg-card">
+            <div className="flex items-center gap-2">
+              <SheetClose asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
+                  <X className="h-4 w-4" />
+                </Button>
+              </SheetClose>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button onClick={() => setIsEditing(true)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
+                <Edit2 className="h-4 w-4" />
               </Button>
-            </SheetClose>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
-              <Edit2 className="h-4 w-4" />
-            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
               <Share className="h-4 w-4" />
             </Button>
@@ -268,5 +272,7 @@ export function TaskDetailsDialog({ task, date, onClose }: Props) {
 
       </SheetContent>
     </Sheet>
+    <NewTaskDialog editTask={task} open={isEditing} onOpenChange={setIsEditing} />
+    </>
   );
 }
