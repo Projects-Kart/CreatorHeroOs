@@ -77,6 +77,7 @@ export interface Task {
   
   createdAt: string;
   completedAt?: string;
+  completedDates?: string[]; // Array of YYYY-MM-DD dates where the task is checked off
   
   subtasks: Subtask[];
   videoId?: string;
@@ -128,6 +129,16 @@ export function isTaskActiveOnDate(task: Task, dateStr: string): boolean {
   return false;
 }
 
+export function isTaskCompletedOnDate(task: Task, dateStr: string): boolean {
+  if (task.completedDates && task.completedDates.includes(dateStr)) {
+    return true;
+  }
+  if (task.recurrence === "none" || !task.recurrence) {
+    return task.completed;
+  }
+  return false;
+}
+
 // ── Goal types ────────────────────────────────────────────────────────────────
 
 export type GoalTarget = {
@@ -137,6 +148,7 @@ export type GoalTarget = {
   unit: string;        // e.g. "subs", "followers", "views/day"
   currentValue: number;
   targetValue: number;
+  history?: { date: string; value: number; diff: number }[]; // Track progress history
 };
 
 export type Goal = {
@@ -148,6 +160,7 @@ export type Goal = {
   createdAt: string;
   reward?: string;
   archived?: boolean;
+  achievedAt?: string | null;
   milestones: { id: string; title: string; done: boolean }[];
 };
 

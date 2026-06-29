@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/AppShell";
 import { useStore, computeStreak } from "@/lib/store";
-import { CATEGORIES, isTaskActiveOnDate } from "@/lib/types";
+import { CATEGORIES, isTaskActiveOnDate, isTaskCompletedOnDate } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,11 +18,11 @@ export function Dashboard() {
   const { tasks, goals, videos, toggleTask, addCheckin, checkins } = useStore();
   const today = todayKey();
   const todays = tasks.filter((t) => isTaskActiveOnDate(t, today));
-  const done = todays.filter((t) => t.completed);
+  const done = todays.filter((t) => isTaskCompletedOnDate(t, today));
   const streak = computeStreak(tasks);
 
   const upcoming = [...tasks]
-    .filter((t) => !t.completed && t.endDate >= today)
+    .filter((t) => !isTaskCompletedOnDate(t, today) && t.endDate >= today)
     .sort((a, b) => a.endDate.localeCompare(b.endDate))
     .slice(0, 3);
 
@@ -59,9 +59,9 @@ export function Dashboard() {
                 const cat = CATEGORIES.find((c) => c.id === t.category)!;
                 return (
                   <li key={t.id} className="py-3 flex items-start gap-3 group transition-all hover:bg-secondary/20 -mx-2 px-2 rounded-lg">
-                    <Checkbox checked={t.completed} onCheckedChange={() => toggleTask(t.id)} className="mt-0.5 rounded-sm transition-transform active:scale-95" />
+                    <Checkbox checked={isTaskCompletedOnDate(t, today)} onCheckedChange={() => toggleTask(t.id, today)} className="mt-0.5 rounded-sm transition-transform active:scale-95" />
                     <div className="flex-1 min-w-0">
-                      <div className={"text-sm font-medium transition-colors " + (t.completed ? "line-through text-muted-foreground" : "text-foreground")}>{t.title}</div>
+                      <div className={"text-sm font-medium transition-colors " + (isTaskCompletedOnDate(t, today) ? "line-through text-muted-foreground" : "text-foreground")}>{t.title}</div>
                       <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary/50 font-medium">
                           <span className="h-1.5 w-1.5 rounded-full shadow-sm" style={{ backgroundColor: `var(--${cat.token})` }} />
@@ -78,23 +78,6 @@ export function Dashboard() {
             </ul>
           </Card>
 
-          <FocusTimer />
-
-          <Card className="p-5 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl">
-            <h2 className="text-lg font-semibold tracking-tight mb-3">Upcoming deadlines</h2>
-            <ul className="space-y-2">
-              {upcoming.map((t) => (
-                <li key={t.id} className="flex items-center justify-between text-sm py-2.5 px-3 rounded-lg hover:bg-secondary/30 transition-colors border border-transparent hover:border-border/50">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-                    <span className="truncate font-medium">{t.title}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground shrink-0 ml-3 bg-secondary px-2 py-1 rounded-md">{t.endDate}</span>
-                </li>
-              ))}
-              {upcoming.length === 0 && <li className="text-sm text-muted-foreground py-2">All clear.</li>}
-            </ul>
-          </Card>
         </section>
 
         <aside className="col-span-12 lg:col-span-4 space-y-6">
@@ -115,7 +98,7 @@ export function Dashboard() {
                   const d = new Date();
                   d.setDate(d.getDate() - (20 - i));
                   const key = d.toISOString().slice(0, 10);
-                  const has = tasks.some((t) => t.completed && t.completedAt?.startsWith(key));
+                  const has = tasks.some((t) => isTaskCompletedOnDate(t, key));
                   return (
                     <div 
                       key={i} 
@@ -127,6 +110,8 @@ export function Dashboard() {
               </div>
             </div>
           </Card>
+
+          <FocusTimer />
 
           <Card className="p-5 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl">
             <h3 className="text-sm font-semibold tracking-tight">Today's stats</h3>

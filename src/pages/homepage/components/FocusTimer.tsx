@@ -26,34 +26,37 @@ export function FocusTimer() {
   const pct = ((total - seconds) / total) * 100;
 
   return (
-    <Card className="p-5 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2 text-primary">
-            <Clock className="h-4 w-4" /> Focus timer
-          </h2>
-          <p className="text-sm text-muted-foreground">Pomodoro. Pair with any task above.</p>
-        </div>
-        <div className="flex gap-1 rounded-md bg-secondary/50 p-1 backdrop-blur-md">
-          <button onClick={() => setMode(25)} className={"px-3 py-1 text-xs rounded transition-all " + (mode === 25 ? "bg-background shadow-sm font-medium text-foreground" : "text-muted-foreground hover:text-foreground")}>25/5</button>
-          <button onClick={() => setMode(50)} className={"px-3 py-1 text-xs rounded transition-all " + (mode === 50 ? "bg-background shadow-sm font-medium text-foreground" : "text-muted-foreground hover:text-foreground")}>50/10</button>
-        </div>
+    <Card className="p-6 backdrop-blur-xl bg-card/60 shadow-lg border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl relative overflow-hidden flex flex-col items-center text-center">
+      
+      <div className="flex items-center gap-2 mb-2 text-primary">
+        <Clock className="h-4 w-4" />
+        <h2 className="text-sm font-semibold tracking-widest uppercase">Focus Timer</h2>
       </div>
-      <div className="flex items-center gap-6">
-        <div className="text-5xl font-semibold tracking-tight tabular-nums bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          {mm}:{ss}
-        </div>
-        <div className="flex-1">
-          <Progress value={pct} className="h-2 rounded-full overflow-hidden" />
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setRunning((r) => !r)} size="sm" variant={running ? "secondary" : "default"} className="rounded-full shadow-md hover:shadow-lg transition-all active:scale-95">
-            {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </Button>
-          <Button onClick={() => { setSeconds(mode * 60); setRunning(false); }} size="sm" variant="ghost" className="rounded-full hover:bg-secondary/50 transition-colors">
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-        </div>
+      <p className="text-xs text-muted-foreground mb-4">Pomodoro. Pair with any task.</p>
+      
+      <div className="text-7xl font-bold tabular-nums tracking-tighter bg-gradient-to-br from-primary to-primary/50 bg-clip-text text-transparent mb-8 mt-2">
+        {mm}:{ss}
+      </div>
+
+      <div className="flex items-center justify-center gap-4 w-full mb-2">
+        <Button onClick={() => setRunning((r) => !r)} size="lg" variant={running ? "secondary" : "default"} className="rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 h-16 w-16 p-0 flex items-center justify-center">
+          {running ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7 ml-1" />}
+        </Button>
+        <Button onClick={() => { setSeconds(mode * 60); setRunning(false); }} size="icon" variant="ghost" className="rounded-full hover:bg-secondary/50 transition-colors h-12 w-12 shrink-0">
+          <RotateCcw className="h-5 w-5" />
+        </Button>
+      </div>
+      
+      <div className="mt-6 mb-2 flex justify-center gap-1 rounded-full bg-secondary/40 p-1 w-full max-w-[200px] backdrop-blur-md border border-white/5 z-10">
+        <button onClick={() => setMode(25)} className={"flex-1 py-1.5 text-xs font-medium rounded-full transition-all " + (mode === 25 ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>25m</button>
+        <button onClick={() => setMode(50)} className={"flex-1 py-1.5 text-xs font-medium rounded-full transition-all " + (mode === 50 ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>50m</button>
+      </div>
+
+      <div className="absolute bottom-0 left-0 w-full h-1.5 bg-secondary/30">
+        <div 
+          className="h-full bg-primary transition-all duration-1000 ease-linear"
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </Card>
   );

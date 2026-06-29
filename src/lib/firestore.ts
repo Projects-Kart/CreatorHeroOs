@@ -122,8 +122,12 @@ export async function updateSettingsFS(uid: string, patch: Partial<Settings>): P
  * Seeds the database with dummy data if it's empty (first-time user).
  */
 export async function seedDatabaseIfEmpty(uid: string): Promise<void> {
-  const tasksSnap = await getDocs(col(uid, "tasks"));
-  if (!tasksSnap.empty) return; // Already seeded — bail out
+  const profileRef = doc(db, "users", uid);
+  const profileSnap = await getDoc(profileRef);
+  
+  if (profileSnap.exists() && profileSnap.data()?.hasSeeded) {
+    return; // Already seeded — bail out
+  }
 
   console.log("[Firebase] Seeding database with dummy data for uid:", uid);
   const batch = writeBatch(db);
@@ -150,6 +154,9 @@ export async function seedDatabaseIfEmpty(uid: string): Promise<void> {
 
   // Settings
   batch.set(doc(col(uid, "settings"), "default"), seedSettings());
+
+  // Mark user as seeded
+  batch.set(profileRef, { hasSeeded: true }, { merge: true });
 
   await batch.commit();
   console.log("[Firebase] Seed complete!");

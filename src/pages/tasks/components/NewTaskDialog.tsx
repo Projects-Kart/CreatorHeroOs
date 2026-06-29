@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, X, Video, Users, Calendar, Clock, RotateCcw, ListTodo, Flag, RepeatIcon, Circle } from "lucide-react";
+import { Plus, X, Video, Users, Calendar, Clock, RotateCcw, ListTodo, Flag, RepeatIcon, Circle, Target } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -34,7 +34,7 @@ const WEEK_DAYS = [
 ];
 
 export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
-  const { addTask } = useStore();
+  const { addTask, goals } = useStore();
   const [open, setOpen] = useState(false);
 
   // Core fields
@@ -43,6 +43,7 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
   const [type, setType] = useState<TaskType>("standard");
   const [category, setCategory] = useState<Task["category"]>("scripting");
   const [priority, setPriority] = useState<TaskPriority>("normal");
+  const [goalId, setGoalId] = useState<string>("none");
   const [startDate, setStartDate] = useState(defaultDate || new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(defaultDate || new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState("");
@@ -77,6 +78,7 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
     setStartDate(defaultDate || new Date().toISOString().slice(0, 10));
     setEndDate(defaultDate || new Date().toISOString().slice(0, 10));
     setTime(""); setEst(""); setRecurrence("none"); setRecurrenceDays([]);
+    setGoalId("none");
     setSubtasks([]); setNewSub("");
     setMeetingLink(""); setMeetingLocation(""); setAttendees("");
   };
@@ -103,6 +105,7 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
     if (meetingLink.trim()) taskData.meetingLink = meetingLink.trim();
     if (meetingLocation.trim()) taskData.meetingLocation = meetingLocation.trim();
     if (attendees.trim()) taskData.attendees = attendees.trim();
+    if (goalId && goalId !== "none") taskData.goalId = goalId;
 
     addTask(taskData);
     setOpen(false);
@@ -200,8 +203,8 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
             </div>
           )}
 
-          {/* Priority + Category */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Priority + Category + Goal */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Flag className="h-3 w-3" /> Priority
@@ -233,6 +236,31 @@ export function NewTaskDialog({ defaultDate }: { defaultDate?: string }) {
                 </Select>
               </div>
             )}
+            
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Target className="h-3 w-3" /> Goal
+              </Label>
+              <Select value={goalId} onValueChange={(val) => {
+                setGoalId(val);
+                if (val !== "none") {
+                  const selectedGoal = goals.find(g => g.id === val);
+                  if (selectedGoal?.deadline) {
+                    setEndDate(selectedGoal.deadline);
+                  }
+                }
+              }}>
+                <SelectTrigger className="font-medium">
+                  <SelectValue placeholder="No Goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none"><span className="text-muted-foreground">No Goal</span></SelectItem>
+                  {goals.filter(g => !g.archived).map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Date / Time / Duration */}

@@ -214,6 +214,16 @@ export function SettingsPage() {
                 <Upload className="h-4 w-4 mr-2" /> Import
               </Button>
             </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-border/50">
+              <div>
+                <p className="text-sm font-medium">Insert Sample Data</p>
+                <p className="text-xs text-muted-foreground">Populate your dashboard with dummy data to see how it works.</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => { store.resetAll(); }} className="border-primary/20 hover:bg-primary/10">
+                <Database className="h-4 w-4 mr-2" /> Insert
+              </Button>
+            </div>
           </div>
         </Card>
 

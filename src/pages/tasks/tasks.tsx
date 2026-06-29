@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/AppShell";
 import { useStore } from "@/lib/store";
-import { CATEGORIES, isTaskActiveOnDate } from "@/lib/types";
+import { CATEGORIES, isTaskActiveOnDate, isTaskCompletedOnDate } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,9 +32,9 @@ export function TasksPage() {
 
   const today = new Date().toISOString().slice(0, 10);
   const todaysTasks = tasks.filter((t) => isTaskActiveOnDate(t, today));
-  const overdueTasks = tasks.filter((t) => !t.completed && t.endDate < today);
+  const overdueTasks = tasks.filter((t) => !isTaskCompletedOnDate(t, today) && t.endDate < today);
   const futureTasks = tasks.filter((t) => t.startDate > today);
-  const doneTasks = tasks.filter((t) => t.completed && t.completedAt?.startsWith(today));
+  const doneTasks = tasks.filter((t) => isTaskCompletedOnDate(t, today));
 
   const toggleExpand = (id: string) => {
     setExpandedSubtasks((prev) => {
@@ -49,25 +49,23 @@ export function TasksPage() {
     const TypeIcon = TYPE_ICONS[t.type];
     const isExpanded = expandedSubtasks.has(t.id);
     const hasSubs = t.subtasks?.length > 0;
-    const doneSubs = t.subtasks?.filter((s: any) => s.done).length ?? 0;
+    const doneSubs = t.subtasks?.filter((s: any) => s.done || s.completed).length ?? 0;
 
     return (
       <Card
         key={t.id}
         onClick={() => setSelectedTask(t)}
         className={`transition-all duration-300 backdrop-blur-md bg-card/60 hover:shadow-md border-border/50 overflow-hidden cursor-pointer group/card ${
-          t.completed ? "opacity-60 bg-secondary/20 hover:opacity-100" : ""
-        } ${t.type === "meeting" ? "border-l-4 border-l-[var(--cat-meeting)]" : ""} ${
-          t.priority === "required" ? "border-l-4 border-l-red-500" : ""
+          isTaskCompletedOnDate(t, today) ? "opacity-60 bg-secondary/20 hover:opacity-100" : ""
         }`}
       >
         {/* Main row */}
         <div className="flex items-start gap-3 p-4">
           <button 
-            onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} 
+            onClick={(e) => { e.stopPropagation(); toggleTask(t.id, today); }} 
             className="shrink-0 transition-transform active:scale-90 mt-0.5"
           >
-            {t.completed
+            {isTaskCompletedOnDate(t, today)
               ? <CheckCircle2 className="h-5 w-5 text-success drop-shadow-sm" />
               : <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 hover:border-primary/50 transition-colors" />}
           </button>
@@ -76,22 +74,26 @@ export function TasksPage() {
             {/* Title row */}
             <div className="flex items-center gap-2 flex-wrap">
               {TypeIcon && <TypeIcon className="h-4 w-4 text-[var(--cat-meeting)] shrink-0" />}
-              <p className={`font-semibold leading-snug transition-all ${t.completed ? "line-through text-muted-foreground" : "text-foreground/90"}`}>
+              <p className={`font-semibold leading-snug transition-all ${isTaskCompletedOnDate(t, today) ? "line-through text-muted-foreground" : "text-foreground/90"}`}>
                 {t.title}
               </p>
               {/* Priority badge */}
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${PRIORITY_COLORS[t.priority] ?? ""}`}>
-                {t.priority}
-              </span>
-              {t.recurrence && t.recurrence !== "none" && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-semibold flex items-center gap-1">
-                  <RotateCcw className="h-2.5 w-2.5" />{t.recurrence}
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 ml-2">
+                {t.priority !== "normal" && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${PRIORITY_COLORS[t.priority] ?? ""}`}>
+                    {t.priority}
+                  </span>
+                )}
+                {t.recurrence && t.recurrence !== "none" && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-semibold flex items-center gap-1 border border-border/50">
+                    <RotateCcw className="h-2.5 w-2.5" />{t.recurrence}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Description */}
-            {t.description && !t.completed && (
+            {t.description && !isTaskCompletedOnDate(t, today) && (
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{t.description}</p>
             )}
 
@@ -143,9 +145,9 @@ export function TasksPage() {
             {hasSubs && (
               <button
                 onClick={(e) => { e.stopPropagation(); toggleExpand(t.id); }}
-                className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md bg-secondary/50 text-secondary-foreground hover:bg-secondary transition-colors"
               >
-                {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                 {doneSubs}/{t.subtasks.length} subtasks
               </button>
             )}
@@ -264,6 +266,7 @@ export function TasksPage() {
       
       <TaskDetailsDialog 
         task={selectedTask} 
+        date={today}
         onClose={() => setSelectedTask(null)} 
       />
     </Tabs>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/AppShell";
 import { useStore } from "@/lib/store";
-import { type Task, CATEGORIES, isTaskActiveOnDate } from "@/lib/types";
+import { type Task, CATEGORIES, isTaskActiveOnDate, isTaskCompletedOnDate } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, PlayCircle, CheckCircle2, Clock } from "lucide-react";
@@ -21,12 +21,14 @@ export function CalendarPage() {
     for (let i = 0; i < firstDow; i++) out.push({ date: null, key: `e${i}` });
     for (let d = 1; d <= daysInMonth; d++) {
       const dt = new Date(cursor.getFullYear(), cursor.getMonth(), d);
-      out.push({ date: dt, key: dt.toISOString().slice(0, 10) });
+      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+      out.push({ date: dt, key });
     }
     return out;
   }, [cursor]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const selectedTasks = selected ? tasks.filter((t) => isTaskActiveOnDate(t, selected)) : [];
   const selectedVideos = selected ? videos.filter((v) => v.publishDate === selected) : [];
 
@@ -54,7 +56,7 @@ export function CalendarPage() {
               const key = cell.key;
               const dayTasks = tasks.filter((t) => isTaskActiveOnDate(t, key));
               const dayVideos = videos.filter((v) => v.publishDate === key);
-              const done = dayTasks.filter((t) => t.completed).length;
+              const done = dayTasks.filter((t) => isTaskCompletedOnDate(t, key)).length;
               const intensity = Math.min(1, dayTasks.length / 6);
               const isToday = key === today;
               const isSelected = selected === key;
@@ -75,7 +77,7 @@ export function CalendarPage() {
                       return (
                         <div 
                           key={t.id} 
-                          className={"text-[10px] truncate rounded px-1.5 py-1 font-medium transition-all " + (t.completed ? "opacity-50 line-through" : "")} 
+                          className={"text-[10px] truncate rounded px-1.5 py-1 font-medium transition-all " + (isTaskCompletedOnDate(t, key) ? "opacity-50 line-through" : "")} 
                           style={{ backgroundColor: `color-mix(in oklab, var(--${c.token}) 15%, transparent)`, color: `var(--${c.token})` }}
                         >
                           {t.title}
@@ -116,8 +118,8 @@ export function CalendarPage() {
                         >
                           <div className="flex items-center gap-3 w-full">
                             <div className="h-2.5 w-2.5 rounded-full shadow-sm shrink-0" style={{ backgroundColor: `var(--${c.token})` }} />
-                            <span className={"flex-1 truncate font-semibold " + (t.completed ? "line-through text-muted-foreground" : "text-foreground/90")}>{t.title}</span>
-                            {t.completed && <CheckCircle2 className="h-4 w-4 text-success opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
+                            <span className={"flex-1 truncate font-semibold " + (isTaskCompletedOnDate(t, selected!) ? "line-through text-muted-foreground" : "text-foreground/90")}>{t.title}</span>
+                            {isTaskCompletedOnDate(t, selected!) && <CheckCircle2 className="h-4 w-4 text-success opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
                           </div>
                           
                           <div className="flex items-center gap-2 pl-5">
@@ -157,7 +159,7 @@ export function CalendarPage() {
         </Card>
       </div>
       
-      <TaskDetailsDialog task={taskToView} onClose={() => setTaskToView(null)} />
+      <TaskDetailsDialog task={taskToView} date={selected || today} onClose={() => setTaskToView(null)} />
     </div>
   );
 }

@@ -1,17 +1,20 @@
-import { type Task, CATEGORIES } from "@/lib/types";
+import { type Task, CATEGORIES, isTaskCompletedOnDate } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, CalendarX, Clock, Calendar, RepeatIcon, MapPin, Users, Video } from "lucide-react";
+import { Trash2, CalendarX, Clock, Calendar, RepeatIcon, MapPin, Users, Video, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CheckCircle2 } from "lucide-react";
 
 interface Props {
   task: Task | null;
+  date?: string;
   onClose: () => void;
 }
 
-export function TaskDetailsDialog({ task, onClose }: Props) {
-  const { deleteTask, updateTask, toggleSubtask } = useStore();
+export function TaskDetailsDialog({ task, date, onClose }: Props) {
+  const { deleteTask, updateTask, toggleSubtask, toggleTask } = useStore();
 
   if (!task) return null;
 
@@ -27,6 +30,18 @@ export function TaskDetailsDialog({ task, onClose }: Props) {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     updateTask(task.id, { endDate: yesterday.toISOString().slice(0, 10) });
+    onClose();
+  };
+
+  const contextDate = date || new Date().toISOString().slice(0, 10);
+  const isCompleted = isTaskCompletedOnDate(task, contextDate);
+
+  const handleToggleComplete = () => {
+    if (!isCompleted && task.subtasks?.length > 0) {
+      const updatedSubtasks = task.subtasks.map(s => ({ ...s, completed: true }));
+      updateTask(task.id, { subtasks: updatedSubtasks });
+    }
+    toggleTask(task.id, contextDate);
     onClose();
   };
 
@@ -134,14 +149,32 @@ export function TaskDetailsDialog({ task, onClose }: Props) {
           )}
         </div>
 
-        <DialogFooter className="p-6 pt-0 flex-col sm:flex-row gap-2">
-          {task.recurrence && task.recurrence !== "none" && (
-            <Button variant="outline" onClick={handleStopFutureReminders} className="w-full sm:w-auto hover:bg-warning/10 hover:text-warning hover:border-warning/50">
-              <CalendarX className="h-4 w-4 mr-2" /> Stop Future Reminders
-            </Button>
-          )}
-          <Button variant="destructive" onClick={handleDeleteTask} className="w-full sm:w-auto">
-            <Trash2 className="h-4 w-4 mr-2" /> Hard Delete
+        <DialogFooter className="p-6 pt-0 flex-row items-center justify-between gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="shrink-0 text-muted-foreground hover:text-foreground">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {task.recurrence && task.recurrence !== "none" && (
+                <DropdownMenuItem onClick={handleStopFutureReminders} className="text-warning focus:text-warning focus:bg-warning/10 cursor-pointer">
+                  <CalendarX className="h-4 w-4 mr-2" /> Stop Future Reminders
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={handleDeleteTask} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
+                <Trash2 className="h-4 w-4 mr-2" /> Hard Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button 
+            variant="default" 
+            onClick={handleToggleComplete} 
+            className={`flex-1 sm:flex-none sm:w-auto ${isCompleted ? "bg-secondary text-foreground hover:bg-secondary/80" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+          >
+            <CheckCircle2 className="h-4 w-4 mr-2" /> 
+            {isCompleted ? "Mark Incomplete" : "Mark Complete"}
           </Button>
         </DialogFooter>
       </DialogContent>

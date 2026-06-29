@@ -152,116 +152,79 @@ export function SharePage({ token }: SharePageProps) {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem", display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}>
 
-        {/* ── Today's Tasks ──────────────────────────────── */}
-        <div style={{ gridColumn: "1 / -1" }}>
-          <SectionHeader icon={<CheckSquare style={{ width: 18, height: 18 }} />} title="Today's Tasks" badge={`${doneTasks.length}/${todaysTasks.length} done`} />
-          {todaysTasks.length === 0 ? (
-            <EmptyState text="No tasks scheduled for today." />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {todaysTasks.map((task) => (
-                <div key={task.id} style={{
-                  display: "flex", alignItems: "center", gap: "0.875rem",
-                  padding: "0.75rem 1rem", borderRadius: "0.625rem",
-                  background: task.completed ? "hsl(var(--primary) / 0.06)" : "hsl(var(--card))",
-                  border: `1px solid ${task.completed ? "hsl(var(--primary) / 0.2)" : "hsl(var(--border) / 0.6)"}`,
-                }}>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-                    background: task.completed ? "hsl(var(--primary))" : "transparent",
-                    border: `2px solid ${task.completed ? "hsl(var(--primary))" : "hsl(var(--border))"}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    {task.completed && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                  </div>
-                  <span style={{ fontSize: "0.875rem", fontWeight: 500, textDecoration: task.completed ? "line-through" : "none", color: task.completed ? "hsl(var(--muted-foreground))" : "hsl(var(--foreground))", flex: 1 }}>
-                    {task.title}
-                  </span>
-                  <PriorityBadge priority={task.priority} />
-                  <span style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", padding: "0.125rem 0.5rem", background: "hsl(var(--secondary))", borderRadius: 999 }}>
-                    {task.category}
-                  </span>
+        {/* ── Goals & Associated Tasks ─────────────────────────────────────── */}
+        {[...goals].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((goal) => {
+          const goalTasks = tasks.filter(t => t.goalId === goal.id);
+          const doneTasks = goalTasks.filter(t => t.completed);
+          
+          const targets = goal.targets ?? [];
+          const pct = targets.length > 0
+            ? Math.min(100, Math.round(targets.reduce((s, t) => s + (t.targetValue > 0 ? (t.currentValue / t.targetValue) * 100 : 0), 0) / targets.length))
+            : 0;
+
+          return (
+            <div key={goal.id} style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem", borderRadius: "1rem", background: "hsl(var(--card))", border: "1px solid hsl(var(--border) / 0.6)", boxShadow: "0 4px 20px -10px hsl(var(--primary) / 0.1)" }}>
+              {/* Goal Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <h2 style={{ fontSize: "1.25rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <Target style={{ width: 22, height: 22, color: "hsl(var(--primary))" }} />
+                    {goal.title}
+                  </h2>
+                  {goal.description && <p style={{ fontSize: "0.875rem", color: "hsl(var(--muted-foreground))", marginTop: "0.25rem" }}>{goal.description}</p>}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <div style={{ textAlign: "right" }}>
+                  <span style={{ fontSize: "1.5rem", fontWeight: 700, color: "hsl(var(--primary))" }}>{pct}%</span>
+                  <div style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Progress</div>
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div style={{ height: 10, borderRadius: 999, background: "hsl(var(--border))", overflow: "hidden", margin: "0.5rem 0" }}>
+                <div style={{ height: "100%", width: `${pct}%`, borderRadius: 999, background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))", transition: "width 0.6s ease" }} />
+              </div>
 
-        {/* ── Goals ─────────────────────────────────────── */}
-        <div>
-          <SectionHeader icon={<Target style={{ width: 18, height: 18 }} />} title="Goals" badge={`${goals.length} active`} />
-          {goals.length === 0 ? (
-            <EmptyState text="No goals set yet." />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              {goals.map((goal) => {
-                const targets = goal.targets ?? [];
-                const pct = targets.length > 0
-                  ? Math.min(100, Math.round(targets.reduce((s, t) => s + (t.targetValue > 0 ? (t.currentValue / t.targetValue) * 100 : 0), 0) / targets.length))
-                  : 0;
-                return (
-                  <div key={goal.id} style={{ padding: "1rem", borderRadius: "0.625rem", background: "hsl(var(--card))", border: "1px solid hsl(var(--border) / 0.6)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                      <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{goal.title}</span>
-                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "hsl(var(--primary))" }}>{pct}%</span>
-                    </div>
-                    <div style={{ height: 6, borderRadius: 999, background: "hsl(var(--border))", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${pct}%`, borderRadius: 999, background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))", transition: "width 0.6s ease" }} />
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
-                      <span style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))" }}>Overall Progress</span>
-                    </div>
-                    {goal.milestones.length > 0 && (
-                      <div style={{ marginTop: "0.625rem", display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
-                        {goal.milestones.map((m) => (
-                          <span key={m.id} style={{
-                            fontSize: "0.6875rem", padding: "0.125rem 0.5rem", borderRadius: 999,
-                            background: m.done ? "hsl(var(--primary) / 0.15)" : "hsl(var(--secondary))",
-                            color: m.done ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-                            textDecoration: m.done ? "line-through" : "none",
-                          }}>
-                            {m.done ? "✓ " : ""}{m.title}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* ── Pipeline Board ────────────────────────────── */}
-        <div>
-          <SectionHeader icon={<Film style={{ width: 18, height: 18 }} />} title="Content Pipeline" badge={`${videos.length} videos`} />
-          {videos.length === 0 ? (
-            <EmptyState text="No videos in pipeline." />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {PIPELINE_STAGES.map((stage) => {
-                const vids = videos.filter((v) => v.stage === stage.id);
-                if (vids.length === 0) return null;
-                return (
-                  <div key={stage.id} style={{ padding: "0.75rem 1rem", borderRadius: "0.625rem", background: "hsl(var(--card))", border: "1px solid hsl(var(--border) / 0.6)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "hsl(var(--muted-foreground))", textTransform: "uppercase", letterSpacing: "0.05em" }}>{stage.label}</span>
-                      <span style={{ fontSize: "0.75rem", background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))", padding: "0 0.5rem", borderRadius: 999, fontWeight: 600 }}>{vids.length}</span>
-                    </div>
-                    {vids.map((v) => (
-                      <div key={v.id} style={{ fontSize: "0.8125rem", padding: "0.25rem 0", borderTop: "1px solid hsl(var(--border) / 0.4)", color: "hsl(var(--foreground) / 0.9)" }}>
-                        {v.title}
-                        {v.estimatedLength && <span style={{ fontSize: "0.6875rem", color: "hsl(var(--muted-foreground))", marginLeft: "0.5rem" }}>{v.estimatedLength}min</span>}
-                      </div>
+              {/* Tasks List */}
+              <div style={{ marginTop: "0.5rem" }}>
+                <h3 style={{ fontSize: "0.8125rem", fontWeight: 700, color: "hsl(var(--muted-foreground))", marginBottom: "1rem", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center" }}>
+                  Goal Tasks <span style={{ background: "hsl(var(--secondary))", padding: "2px 8px", borderRadius: 999, fontSize: "0.7rem", marginLeft: "0.75rem", color: "hsl(var(--foreground))" }}>{doneTasks.length}/{goalTasks.length} done</span>
+                </h3>
+                {goalTasks.length === 0 ? (
+                  <EmptyState text="No tasks linked to this goal." />
+                ) : (
+                  <div style={{ display: "grid", gap: "0.5rem" }}>
+                    {goalTasks.map((task) => (
+                      <TaskRow key={task.id} task={task} />
                     ))}
                   </div>
-                );
-              })}
+                )}
+              </div>
             </div>
-          )}
-        </div>
+          );
+        })}
+
+        {/* ── General Tasks ──────────────────────────────── */}
+        {(() => {
+          const generalTasks = tasks.filter(t => !t.goalId || t.goalId === "none");
+          const doneTasks = generalTasks.filter(t => t.completed);
+          if (generalTasks.length === 0) return null;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem", borderRadius: "1rem", background: "hsl(var(--card))", border: "1px solid hsl(var(--border) / 0.6)", boxShadow: "0 4px 20px -10px hsl(var(--foreground) / 0.05)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <CheckSquare style={{ width: 22, height: 22, color: "hsl(var(--muted-foreground))" }} />
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>General Tasks</h2>
+                <span style={{ background: "hsl(var(--secondary))", padding: "2px 8px", borderRadius: 999, fontSize: "0.75rem", marginLeft: "auto", color: "hsl(var(--foreground))", fontWeight: 600 }}>{doneTasks.length}/{generalTasks.length} done</span>
+              </div>
+              <div style={{ display: "grid", gap: "0.5rem" }}>
+                {generalTasks.map((task) => (
+                  <TaskRow key={task.id} task={task} />
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
 
@@ -276,12 +239,30 @@ export function SharePage({ token }: SharePageProps) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function SectionHeader({ icon, title, badge }: { icon: React.ReactNode; title: string; badge?: string }) {
+function TaskRow({ task }: { task: Task }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "0.875rem" }}>
-      <div style={{ color: "hsl(var(--primary))" }}>{icon}</div>
-      <h2 style={{ fontSize: "1rem", fontWeight: 700, flex: 1 }}>{title}</h2>
-      {badge && <span style={{ fontSize: "0.75rem", padding: "0.125rem 0.625rem", background: "hsl(var(--secondary))", borderRadius: 999, color: "hsl(var(--muted-foreground))", fontWeight: 500 }}>{badge}</span>}
+    <div style={{
+      display: "flex", alignItems: "center", gap: "0.875rem",
+      padding: "0.75rem 1rem", borderRadius: "0.5rem",
+      background: task.completed ? "hsl(var(--primary) / 0.06)" : "hsl(var(--secondary) / 0.3)",
+      border: `1px solid ${task.completed ? "hsl(var(--primary) / 0.2)" : "hsl(var(--border) / 0.4)"}`,
+      transition: "all 0.2s ease"
+    }}>
+      <div style={{
+        width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+        background: task.completed ? "hsl(var(--primary))" : "transparent",
+        border: `2px solid ${task.completed ? "hsl(var(--primary))" : "hsl(var(--border))"}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {task.completed && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+      </div>
+      <span style={{ fontSize: "0.875rem", fontWeight: 600, textDecoration: task.completed ? "line-through" : "none", color: task.completed ? "hsl(var(--muted-foreground))" : "hsl(var(--foreground))", flex: 1 }}>
+        {task.title}
+      </span>
+      <PriorityBadge priority={task.priority} />
+      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "hsl(var(--muted-foreground))", padding: "0.125rem 0.5rem", background: "hsl(var(--background))", borderRadius: 999, border: "1px solid hsl(var(--border) / 0.5)" }}>
+        {task.category}
+      </span>
     </div>
   );
 }

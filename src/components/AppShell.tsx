@@ -14,7 +14,6 @@ import {
 import { useStore, computeStreak } from "@/lib/store";
 import { useAuth } from "@/lib/useAuth";
 import type { ReactNode } from "react";
-
 const NAV: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
@@ -108,7 +107,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </aside>
-      <main className="flex-1 min-w-0 h-full overflow-y-auto relative">{children}</main>
+      <main className="flex-1 min-w-0 h-full overflow-y-auto relative flex flex-col">
+        <div className="flex-1 min-h-0 relative">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

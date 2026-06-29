@@ -6,8 +6,9 @@ import { NewGoalDialog } from "./components/NewGoalDialog";
 
 export function GoalsPage() {
   const { goals, updateGoal, deleteGoal } = useStore();
-  const active = goals.filter((g) => !g.archived);
-  const archived = goals.filter((g) => g.archived);
+  const sortedGoals = [...goals].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const active = sortedGoals.filter((g) => !g.archived);
+  const archived = sortedGoals.filter((g) => g.archived);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">

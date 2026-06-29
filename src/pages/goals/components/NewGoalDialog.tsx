@@ -122,6 +122,19 @@ export function NewGoalDialog() {
   const [targets, setTargets] = useState<GoalTarget[]>([
     { id: uid(), label: "YouTube Subscribers", platform: "YouTube", unit: "subs", currentValue: 0, targetValue: 0 },
   ]);
+  const [milestones, setMilestones] = useState<{id: string, title: string, done: boolean}[]>([]);
+
+  const addMilestone = () => {
+    setMilestones((m) => [...m, { id: uid(), title: "", done: false }]);
+  };
+
+  const updateMilestone = (id: string, title: string) => {
+    setMilestones((m) => m.map((x) => (x.id === id ? { ...x, title } : x)));
+  };
+
+  const removeMilestone = (id: string) => {
+    setMilestones((m) => m.filter((x) => x.id !== id));
+  };
 
   const addTarget = (preset?: typeof PLATFORM_PRESETS[0]) => {
     setTargets((t) => [
@@ -150,6 +163,7 @@ export function NewGoalDialog() {
     const d = new Date(); d.setMonth(d.getMonth() + 4);
     setDeadline(d.toISOString().slice(0, 10));
     setTargets([{ id: uid(), label: "YouTube Subscribers", platform: "YouTube", unit: "subs", currentValue: 0, targetValue: 0 }]);
+    setMilestones([]);
   };
 
   const submit = () => {
@@ -160,7 +174,7 @@ export function NewGoalDialog() {
       targets,
       deadline,
       reward: reward.trim() || undefined,
-      milestones: [],
+      milestones: milestones.filter(m => m.title.trim() !== ""),
     });
     setOpen(false);
     reset();
@@ -250,6 +264,36 @@ export function NewGoalDialog() {
                 );
               })}
             </div>
+          </div>
+
+          {/* Milestones */}
+          <div className="space-y-3 pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Milestones ({milestones.length})
+              </Label>
+            </div>
+            
+            {milestones.map((m) => (
+              <div key={m.id} className="flex items-center gap-2">
+                <Input
+                  value={m.title}
+                  onChange={(e) => updateMilestone(m.id, e.target.value)}
+                  placeholder="e.g. Hit first $500/mo"
+                  className="text-sm h-8 flex-1"
+                />
+                <Button variant="ghost" size="icon" onClick={() => removeMilestone(m.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            
+            <button
+              onClick={addMilestone}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-dashed border-border hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all font-medium"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add Milestone
+            </button>
           </div>
         </div>
 

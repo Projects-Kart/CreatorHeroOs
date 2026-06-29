@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { PageHeader } from "@/components/AppShell";
 import { useStore } from "@/lib/store";
-import { CATEGORIES } from "@/lib/types";
+import { CATEGORIES, isTaskCompletedOnDate } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
 import { AlertTriangle, TrendingUp, Zap } from "lucide-react";
@@ -17,7 +17,7 @@ export function AnalyticsPage() {
       const key = d.toISOString().slice(0, 10);
       out.push({
         date: key.slice(5),
-        completed: tasks.filter((t) => t.completed && t.completedAt?.startsWith(key)).length,
+        completed: tasks.filter((t) => isTaskCompletedOnDate(t, key)).length,
         planned: tasks.filter((t) => t.endDate === key).length,
       });
     }
@@ -34,7 +34,10 @@ export function AnalyticsPage() {
 
   const dayOfWeek = useMemo(() => {
     const counts = [0, 0, 0, 0, 0, 0, 0];
-    tasks.forEach((t) => { if (t.completed && t.completedAt) counts[new Date(t.completedAt).getDay()]++; });
+    tasks.forEach((t) => { 
+      if (t.completed && t.completedAt) counts[new Date(t.completedAt).getDay()]++; 
+      if (t.completedDates) t.completedDates.forEach((d) => counts[new Date(d).getDay()]++);
+    });
     return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => ({ day: d, completed: counts[i] }));
   }, [tasks]);
 

@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -14,5 +14,12 @@ const firebaseConfig = {
 // Initialize Firebase (avoid re-initialization in HMR)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-export const db = getFirestore(app);
+let dbInstance;
+try {
+  dbInstance = initializeFirestore(app, { ignoreUndefinedProperties: true });
+} catch (e) {
+  dbInstance = getFirestore(app);
+}
+
+export const db = dbInstance;
 export const auth = getAuth(app);

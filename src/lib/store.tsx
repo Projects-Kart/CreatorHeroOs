@@ -43,7 +43,7 @@ type Ctx = State & {
   addTask: (t: Omit<Task, "id" | "completed" | "subtasks"> & { subtasks?: Task["subtasks"] }) => void;
   updateTask: (id: string, patch: Partial<Task>) => void;
   deleteTask: (id: string) => void;
-  toggleTask: (id: string) => void;
+  toggleTask: (id: string, date?: string) => void;
   toggleSubtask: (taskId: string, subId: string) => void;
 
   addGoal: (g: Omit<Goal, "id" | "createdAt" | "milestones"> & { milestones?: Goal["milestones"] }) => void;
@@ -100,8 +100,8 @@ export function StoreProvider({ children, firebaseUid }: StoreProviderProps) {
   useEffect(() => {
     if (!firebaseUid) return;
 
-    // Seed on first visit (no-op if data already exists)
-    seedDatabaseIfEmpty(firebaseUid).catch(console.error);
+    // We no longer automatically seed the database on first visit.
+    // seedDatabaseIfEmpty(firebaseUid).catch(console.error);
 
     // Subscribe to all collections in real-time
     const unsubTasks = subscribeTasks(firebaseUid, (tasks) => {
@@ -156,14 +156,25 @@ export function StoreProvider({ children, firebaseUid }: StoreProviderProps) {
     deleteTask: (id) => {
       deleteTaskFS(firebaseUid, id).catch(console.error);
     },
-    toggleTask: (id) => {
+    toggleTask: (id, date) => {
       const task = state.tasks.find((t) => t.id === id);
       if (!task) return;
-      const patch: Partial<Task> = {
-        completed: !task.completed,
-        completedAt: !task.completed ? new Date().toISOString() : undefined,
-      };
-      updateTaskFS(firebaseUid, id, patch).catch(console.error);
+      if (date && task.recurrence !== "none" && task.recurrence) {
+        const completedDates = task.completedDates || [];
+        const isCompletedOnDate = completedDates.includes(date);
+        const patch: Partial<Task> = {
+          completedDates: isCompletedOnDate 
+            ? completedDates.filter(d => d !== date) 
+            : [...completedDates, date],
+        };
+        updateTaskFS(firebaseUid, id, patch).catch(console.error);
+      } else {
+        const patch: Partial<Task> = {
+          completed: !task.completed,
+          completedAt: !task.completed ? new Date().toISOString() : undefined,
+        };
+        updateTaskFS(firebaseUid, id, patch).catch(console.error);
+      }
     },
     toggleSubtask: (taskId, subId) => {
       const task = state.tasks.find((t) => t.id === taskId);
@@ -258,9 +269,15 @@ export function useStore() {
 // ─── Derived helpers ──────────────────────────────────────────────────────────
 
 export function computeStreak(tasks: Task[]): number {
-  const days = new Set(
-    tasks.filter((t) => t.completed && t.completedAt).map((t) => t.completedAt!.slice(0, 10)),
-  );
+  const days = new Set<string>();
+  tasks.forEach((t) => {
+    if (t.completed && t.completedAt) {
+      days.add(t.completedAt.slice(0, 10));
+    }
+    if (t.completedDates) {
+      t.completedDates.forEach((d) => days.add(d));
+    }
+  });
   let streak = 0;
   const d = new Date();
   for (;;) {
