@@ -202,14 +202,35 @@ export function StoreProvider({ children, firebaseUid }: StoreProviderProps) {
 
     // Videos
     addVideo: (v) => {
-      const video: Video = { ...v, id: uid(), createdAt: new Date().toISOString().slice(0, 10) };
+      const date = new Date().toISOString();
+      const video: Video = { 
+        ...v, 
+        id: uid(), 
+        createdAt: date.slice(0, 10),
+        stageDates: { [v.stage]: date },
+        stageHistory: [{ stageId: v.stage, date }]
+      };
       addVideoFS(firebaseUid, video).catch(console.error);
     },
     updateVideo: (id, patch) => {
+      if (patch.stage) {
+        const video = state.videos.find((v) => v.id === id);
+        if (video && video.stage !== patch.stage) {
+          const date = new Date().toISOString();
+          patch.stageDates = { 
+            ...(video.stageDates || {}), 
+            [patch.stage]: date 
+          };
+          patch.stageHistory = [
+            ...(video.stageHistory || []),
+            { stageId: patch.stage, date }
+          ];
+        }
+      }
       updateVideoFS(firebaseUid, id, patch).catch(console.error);
     },
     moveVideo: (id, stage) => {
-      updateVideoFS(firebaseUid, id, { stage }).catch(console.error);
+      ctx.updateVideo(id, { stage });
     },
     deleteVideo: (id) => {
       deleteVideoFS(firebaseUid, id).catch(console.error);

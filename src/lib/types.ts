@@ -190,8 +190,15 @@ export const PIPELINE_STAGES: { id: PipelineStage; label: string }[] = [
 export type Video = {
   id: string;
   title: string;
-  hook?: string;
+  description?: string;
+  tags?: string[];
+  script?: string;
+  notes?: string;
+  linkedGoalId?: string;
+  linkedTaskId?: string;
   stage: PipelineStage;
+  stageDates?: Partial<Record<PipelineStage, string>>;
+  stageHistory?: { stageId: PipelineStage; date: string }[];
   series?: string;
   publishDate?: string;
   estimatedLength?: number; // minutes
