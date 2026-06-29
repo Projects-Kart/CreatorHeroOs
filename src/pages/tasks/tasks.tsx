@@ -36,8 +36,8 @@ export function TasksPage() {
       if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
       const isCompleted = isTaskCompletedOnDate(t, today);
       const isOverdue = !isCompleted && t.endDate < today;
-      const isDoing = !isCompleted && !isOverdue && t.startDate <= today && t.endDate >= today;
-      const isTodo = !isCompleted && !isOverdue && t.startDate > today;
+      const isDoing = !isCompleted && !isOverdue && t.startDate < today && t.endDate >= today;
+      const isTodo = !isCompleted && !isOverdue && t.startDate === today;
 
       if (filter === "todo") return isTodo;
       if (filter === "inprogress") return isDoing;
@@ -50,8 +50,8 @@ export function TasksPage() {
   // Tab counts
   const counts = useMemo(() => {
     return {
-      todo: tasks.filter(t => { const c = isTaskCompletedOnDate(t, today); return !c && t.startDate > today && !(t.endDate < today); }).length,
-      inprogress: tasks.filter(t => { const c = isTaskCompletedOnDate(t, today); return !c && t.startDate <= today && t.endDate >= today; }).length,
+      todo: tasks.filter(t => { const c = isTaskCompletedOnDate(t, today); return !c && t.startDate === today; }).length,
+      inprogress: tasks.filter(t => { const c = isTaskCompletedOnDate(t, today); return !c && t.startDate < today && t.endDate >= today; }).length,
       overdue: tasks.filter(t => !isTaskCompletedOnDate(t, today) && t.endDate < today).length,
       completed: tasks.filter(t => isTaskCompletedOnDate(t, today)).length,
       all: tasks.length
@@ -62,7 +62,7 @@ export function TasksPage() {
     const c = CATEGORIES.find((x) => x.id === t.category) ?? CATEGORIES[0];
     const isCompleted = isTaskCompletedOnDate(t, today);
     const isOverdue = !isCompleted && t.endDate < today;
-    const isDoing = !isCompleted && !isOverdue && t.startDate <= today && t.endDate >= today;
+    const isDoing = !isCompleted && !isOverdue && t.startDate < today && t.endDate >= today;
     
     // Status Badge
     let statusBadge = null;
@@ -170,24 +170,24 @@ export function TasksPage() {
               />
             </div>
             
-            <div className="flex items-center bg-card rounded-lg p-0.5 border border-border/60 shadow-sm ml-1 h-9">
+            {/* <div className="flex items-center bg-card rounded-lg p-0.5 border border-border/60 shadow-sm ml-1 h-9">
               <button className="px-2 h-full bg-background rounded-md shadow-sm text-foreground"><LayoutList className="h-4 w-4" /></button>
               <button className="px-2 h-full text-muted-foreground hover:text-foreground transition-colors"><LayoutGrid className="h-4 w-4" /></button>
-            </div>
+            </div> */}
             
             <div className="flex items-center gap-1 ml-2 bg-card p-0.5 rounded-lg border border-border/60 shadow-sm h-9 overflow-x-auto hide-scrollbar">
-               <button onClick={() => setFilter("todo")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "todo" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>To Do <span className="bg-secondary/80 px-1.5 rounded-sm text-[10px]">{counts.todo}</span></button>
-               <button onClick={() => setFilter("inprogress")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "inprogress" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Inprogress <span className="bg-secondary/80 px-1.5 rounded-sm text-[10px]">{counts.inprogress}</span></button>
-               <button onClick={() => setFilter("overdue")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "overdue" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Overdue <span className="bg-secondary/80 px-1.5 rounded-sm text-[10px]">{counts.overdue}</span></button>
-               <button onClick={() => setFilter("completed")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "completed" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Completed <span className="bg-secondary/80 px-1.5 rounded-sm text-[10px]">{counts.completed}</span></button>
+               <button onClick={() => setFilter("todo")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "todo" ? "bg-orange-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>To Do <span className={`px-1.5 rounded-sm text-[10px] ${filter === 'todo' ? 'bg-white/20 text-white' : 'bg-secondary/80 text-foreground'}`}>{counts.todo}</span></button>
+               <button onClick={() => setFilter("inprogress")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "inprogress" ? "bg-orange-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Inprogress <span className={`px-1.5 rounded-sm text-[10px] ${filter === 'inprogress' ? 'bg-white/20 text-white' : 'bg-secondary/80 text-foreground'}`}>{counts.inprogress}</span></button>
+               <button onClick={() => setFilter("overdue")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "overdue" ? "bg-orange-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Overdue <span className={`px-1.5 rounded-sm text-[10px] ${filter === 'overdue' ? 'bg-white/20 text-white' : 'bg-secondary/80 text-foreground'}`}>{counts.overdue}</span></button>
+               <button onClick={() => setFilter("completed")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "completed" ? "bg-orange-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Completed <span className={`px-1.5 rounded-sm text-[10px] ${filter === 'completed' ? 'bg-white/20 text-white' : 'bg-secondary/80 text-foreground'}`}>{counts.completed}</span></button>
                <button onClick={() => setFilter("all")} className={`px-3 h-full rounded-md text-[12px] font-bold flex items-center gap-2 transition-all ${filter === "all" ? "bg-orange-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>All <span className={`px-1.5 rounded-sm text-[10px] ${filter === 'all' ? 'bg-white/20 text-white' : 'bg-secondary/80 text-foreground'}`}>{counts.all}</span></button>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-             <Button variant="outline" className="h-9 font-bold text-xs text-foreground bg-card border-border/60 shadow-sm hidden xl:flex">Assignee <ChevronDown className="h-3 w-3 ml-2 text-muted-foreground" /></Button>
+             {/* <Button variant="outline" className="h-9 font-bold text-xs text-foreground bg-card border-border/60 shadow-sm hidden xl:flex">Assignee <ChevronDown className="h-3 w-3 ml-2 text-muted-foreground" /></Button>
              <Button variant="outline" className="h-9 font-bold text-xs text-foreground bg-card border-border/60 shadow-sm hidden xl:flex">Priority <ChevronDown className="h-3 w-3 ml-2 text-muted-foreground" /></Button>
-             <Button variant="outline" className="h-9 font-bold text-xs text-foreground bg-card border-border/60 shadow-sm"><Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" /> Filter</Button>
+             <Button variant="outline" className="h-9 font-bold text-xs text-foreground bg-card border-border/60 shadow-sm"><Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" /> Filter</Button> */}
              <NewTaskDialog trigger={
                 <Button className="bg-[#6d28d9] hover:bg-[#5b21b6] text-white h-9 font-bold text-xs px-4 shadow-sm rounded-lg">
                   <Plus className="h-4 w-4 mr-1.5" /> Create Task

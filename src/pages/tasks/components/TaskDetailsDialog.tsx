@@ -148,6 +148,22 @@ export function TaskDetailsDialog({ task, date, onClose }: Props) {
                 {new Date(task.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
 
+              {task.recurrence && task.recurrence !== "none" && (
+                <>
+                  <div className="text-muted-foreground flex items-center gap-2">
+                    <RepeatIcon className="h-4 w-4" /> Repeats
+                  </div>
+                  <div className="font-medium text-foreground capitalize">
+                    {task.recurrence}
+                    {task.recurrence === "weekly" && task.recurrenceDays && task.recurrenceDays.length > 0 && (
+                      <span className="text-muted-foreground normal-case ml-1">
+                        on {task.recurrenceDays.join(", ")}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+
               <div className="text-muted-foreground flex items-center gap-2">
                 <Activity className="h-4 w-4" /> Progress
               </div>
